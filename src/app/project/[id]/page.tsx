@@ -10,6 +10,7 @@ import {
 } from "@/app/components/ProjectDetailHeader";
 import { ProjectDetailMain } from "@/app/components/ProjectDetailMain";
 import { ProjectDetailSidebar } from "@/app/components/ProjectDetailSidebar";
+import { ProjectNotFound } from "@/app/components/shared/ProjectNotFound";
 import { useProjectStore } from "@/app/store/ProjectStore";
 
 export default function ProjectDetailPage() {
@@ -25,24 +26,12 @@ export default function ProjectDetailPage() {
   const [showProjectChecklist, setShowProjectChecklist] = useState(false);
 
   if (!project) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#fefbf7]">
-        <div className="text-center">
-          <p className="text-lg font-medium text-[#554e46]">Project not found</p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-3 text-sm text-[#7267bf] hover:underline"
-          >
-            Back to Projects
-          </button>
-        </div>
-      </div>
-    );
+    return <ProjectNotFound />;
   }
 
   return (
     <MLSidebarProvider>
-      <div className="fixed inset-0 flex overflow-hidden bg-[#fefbf7]">
+      <div className="fixed inset-0 flex overflow-hidden bg-[var(--color-bg)]">
         {/* Left sidebar — collapsed by default on detail page */}
         <aside
           className={`shrink-0 flex flex-col bg-sidebar text-sidebar-foreground overflow-hidden transition-[width] duration-200 ease-linear ${
@@ -59,7 +48,7 @@ export default function ProjectDetailPage() {
         </aside>
 
         {/* Right side: header + content */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 border-l border-[#d7cfc5] shadow-xs">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 border-l border-[var(--color-border)] shadow-xs">
           {/* Top header row: breadcrumb, bell, avatar */}
           <ProjectDetailHeader
             project={project}

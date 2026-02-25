@@ -50,10 +50,10 @@ function StageNode({ data, selected }: NodeProps<Node<StageNodeData>>) {
       tabIndex={0}
       className={`flex items-center gap-2 px-3 rounded-xl select-none cursor-pointer
         shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]
-        transition-all outline-none
+        transition-[border-color,background-color] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30
         bg-[rgba(0,0,0,0.04)] hover:bg-[rgba(0,0,0,0.06)] ${
           selected
-            ? "border-[2px] border-[#6e04bd] ring-2 ring-[#6e04bd]/20"
+            ? "border-[2px] border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20"
             : "border-[0.5px] border-[rgba(0,0,0,0.16)]"
         }`}
       style={{ width: NODE_W, height: NODE_H }}
@@ -61,16 +61,16 @@ function StageNode({ data, selected }: NodeProps<Node<StageNodeData>>) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-[9px] !h-[9px] !bg-[#6e04bd] !border-2 !border-white !-left-[4.5px]"
+        className="!w-[9px] !h-[9px] !bg-[var(--color-brand)] !border-2 !border-white !-left-[4.5px]"
       />
       <GripHorizontal className="drag-handle w-4 h-4 shrink-0 text-[#998d7d] cursor-grab active:cursor-grabbing" />
-      <span className="text-sm font-medium leading-5 truncate flex-1 text-[#554e46]">
+      <span className="text-sm font-medium leading-5 truncate flex-1 text-[var(--color-text)]">
         {data.title}
       </span>
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-[9px] !h-[9px] !bg-[#6e04bd] !border-2 !border-white !-bottom-[4.5px]"
+        className="!w-[9px] !h-[9px] !bg-[var(--color-brand)] !border-2 !border-white !-bottom-[4.5px]"
       />
     </div>
   );
@@ -78,7 +78,7 @@ function StageNode({ data, selected }: NodeProps<Node<StageNodeData>>) {
 
 function SectionLabel({ data }: NodeProps<Node<LabelNodeData>>) {
   return (
-    <div className="text-xs font-semibold text-[#7b6f60] tracking-[1.5px] uppercase select-none pointer-events-none">
+    <div className="text-xs font-semibold text-[var(--color-text-muted)] tracking-[1.5px] uppercase select-none pointer-events-none">
       {data.label}
     </div>
   );
@@ -133,7 +133,7 @@ function PipelineEdgeComponent({
   selected,
 }: EdgeProps) {
   const edgePath = buildEdgePath(sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition);
-  const color = selected ? "#c44dff" : "#6e04bd";
+  const color = selected ? "#c44dff" : "var(--color-brand)";
   const width = selected ? 2.5 : 1.5;
 
   return (
@@ -268,13 +268,13 @@ function AddStageOverlay({
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center" onClick={onCancel}>
       <div
-        className="rounded-xl bg-[#e3e0dd] shadow-[0px_8px_32px_rgba(0,0,0,0.12)] overflow-hidden"
+        className="rounded-xl bg-[var(--color-border-alt)] shadow-[0px_8px_32px_rgba(0,0,0,0.12)] overflow-hidden"
         style={{ width: step === "config" ? 340 : 320 }}
         onClick={(e) => e.stopPropagation()}
       >
         {step === "naming" && (
           <div className="p-4">
-            <div className="text-sm font-semibold text-[#554e46] mb-3">New Stage</div>
+            <div className="text-sm font-semibold text-[var(--color-text)] mb-3">New Stage</div>
             <input
               ref={inputRef}
               type="text"
@@ -285,24 +285,24 @@ function AddStageOverlay({
                 if (e.key === "Escape") onCancel();
               }}
               placeholder="Name your stage"
-              className="w-full h-10 px-3 rounded-lg border border-[#6e04bd] bg-white text-sm text-[#554e46] placeholder:text-[#ac9b85] outline-none"
+              className="w-full h-10 px-3 rounded-lg border border-[var(--color-brand)] bg-white text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
             />
-            <div className="text-xs text-[#ac9b85] mt-2">Press ret to confirm</div>
+            <div className="text-xs text-[var(--color-text-secondary)] mt-2">Press ret to confirm</div>
           </div>
         )}
 
         {step === "config" && (
           <div className="p-4">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#6e04bd]" />
-              <GripHorizontal className="w-4 h-4 text-[#7b6f60]" />
-              <span className="text-sm font-semibold text-[#554e46]">{stageName}</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand)]" />
+              <GripHorizontal className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <span className="text-sm font-semibold text-[var(--color-text)]">{stageName}</span>
             </div>
 
             <div className="flex items-center h-9 bg-[#d5d0cc] rounded-lg px-[3px] py-1 mb-4">
               <button
                 onClick={() => onMoveTypeChange("auto")}
-                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium text-[#554e46] cursor-pointer transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium text-[var(--color-text)] cursor-pointer transition-all ${
                   moveType === "auto"
                     ? "bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]"
                     : "hover:bg-white/40"
@@ -312,7 +312,7 @@ function AddStageOverlay({
               </button>
               <button
                 onClick={() => onMoveTypeChange("manual")}
-                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium text-[#554e46] cursor-pointer transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium text-[var(--color-text)] cursor-pointer transition-all ${
                   moveType === "manual"
                     ? "bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]"
                     : "hover:bg-white/40"
@@ -324,25 +324,25 @@ function AddStageOverlay({
 
             {moveType === "auto" && (
               <>
-                <div className="text-xs font-medium text-[#7b6f60] mb-2">Move to next stage when</div>
+                <div className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Move to next stage when</div>
                 <div className="flex flex-col gap-2 mb-3">
                   {conditions.map((c) => (
                     <div key={c.id} className="flex items-center gap-1.5">
                       <select
                         value={c.field}
                         onChange={(e) => onConditionChange(c.id, "field", e.target.value)}
-                        className="flex-1 h-8 px-2 rounded-md border border-[#d5c8b8] bg-white text-xs text-[#554e46] outline-none cursor-pointer"
+                        className="flex-1 h-8 px-2 rounded-md border border-[#d5c8b8] bg-white text-xs text-[var(--color-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30 cursor-pointer"
                       >
                         <option value="credit application">credit application</option>
                         <option value="contract">contract</option>
                         <option value="permit">permit</option>
                         <option value="inspection">inspection</option>
                       </select>
-                      <span className="text-xs text-[#7b6f60]">is</span>
+                      <span className="text-xs text-[var(--color-text-muted)]">is</span>
                       <select
                         value={c.value}
                         onChange={(e) => onConditionChange(c.id, "value", e.target.value)}
-                        className="flex-1 h-8 px-2 rounded-md border border-[#d5c8b8] bg-white text-xs text-[#554e46] outline-none cursor-pointer"
+                        className="flex-1 h-8 px-2 rounded-md border border-[#d5c8b8] bg-white text-xs text-[var(--color-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30 cursor-pointer"
                       >
                         <option value="submitted">submitted</option>
                         <option value="approved">approved</option>
@@ -351,15 +351,17 @@ function AddStageOverlay({
                       </select>
                       <button
                         onClick={() => onConditionRemove(c.id)}
-                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 cursor-pointer"
+                        aria-label="Remove condition"
+                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
                       >
-                        <X className="w-3 h-3 text-[#7b6f60]" />
+                        <X className="w-3 h-3 text-[var(--color-text-muted)]" />
                       </button>
                       <button
                         onClick={onConditionAdd}
-                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 cursor-pointer"
+                        aria-label="Add condition"
+                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
                       >
-                        <Plus className="w-3 h-3 text-[#7b6f60]" />
+                        <Plus className="w-3 h-3 text-[var(--color-text-muted)]" />
                       </button>
                     </div>
                   ))}
@@ -370,7 +372,7 @@ function AddStageOverlay({
             <div className="flex justify-end">
               <button
                 onClick={onSave}
-                className="h-8 px-4 py-2 bg-[#6e04bd] text-white text-xs font-medium rounded-lg cursor-pointer hover:bg-[#5c03a0] transition-colors"
+                className="h-8 px-4 py-2 bg-[var(--color-brand)] text-white text-xs font-medium rounded-lg cursor-pointer hover:bg-[var(--color-brand-hover)] transition-colors"
               >
                 Save stage
               </button>
@@ -388,11 +390,10 @@ export interface PipelineEditorHandle {
   saveLayout: () => void;
 }
 
-let nodeCounter = 0;
-
 // ── Inner component (requires ReactFlowProvider ancestor) ──
 
 const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEditorInner(_, ref) {
+  const nodeCounterRef = useRef(0);
   const {
     presaleStages,
     postSaleStages,
@@ -621,7 +622,7 @@ const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEd
   }, []);
 
   const handleSaveStage = useCallback(() => {
-    const id = `custom-${Date.now()}-${++nodeCounter}`;
+    const id = `custom-${Date.now()}-${++nodeCounterRef.current}`;
     const title = newStageName.trim();
 
     // Place below whichever column is visible; defaults to pre-sale side
@@ -634,7 +635,7 @@ const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEd
       return n ? Math.max(max, n.position.y) : max;
     }, 0);
 
-    storeAddStage({ id, title, color: "#6e04bd" }, section);
+    storeAddStage({ id, title, color: "var(--color-brand)" }, section);
 
     const newNode: Node<StageNodeData> = {
       id,
@@ -728,10 +729,10 @@ const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEd
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-0 relative rounded-xl border border-dashed border-[#d5c8b8] bg-[#f4f1ed] overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 relative rounded-xl border border-dashed border-[#d5c8b8] bg-[var(--color-surface)] overflow-hidden flex flex-col">
         {/* Controls */}
         <div className={`absolute top-0 left-0 right-0 z-20 flex items-center justify-end gap-3 p-4 transition-opacity duration-200 ${addStep !== "idle" ? "opacity-30 pointer-events-none" : ""}`}>
-          <div className="flex items-center h-8 bg-[#e3e0dd] rounded-lg border-[0.5px] border-[rgba(0,0,0,0.08)] px-[3px] py-1">
+          <div className="flex items-center h-8 bg-[var(--color-border-alt)] rounded-lg border-[0.5px] border-[rgba(0,0,0,0.08)] px-[3px] py-1">
             {(
               [
                 { id: "all", label: "All" },
@@ -742,7 +743,7 @@ const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEd
               <button
                 key={opt.id}
                 onClick={() => setFilter(opt.id)}
-                className={`px-5 py-1 rounded-md text-sm font-medium leading-5 text-[#554e46] cursor-pointer transition-all whitespace-nowrap ${
+                className={`px-5 py-1 rounded-md text-sm font-medium leading-5 text-[var(--color-text)] cursor-pointer transition-all whitespace-nowrap ${
                   filter === opt.id
                     ? "bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.06)]"
                     : "hover:bg-white/40"
@@ -754,7 +755,7 @@ const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEd
           </div>
           <button
             onClick={handleAddClick}
-            className="h-8 px-3 py-2 bg-[#6e04bd] text-white text-xs font-medium leading-4 rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[#5c03a0] transition-colors flex items-center gap-2 whitespace-nowrap"
+            className="h-8 px-3 py-2 bg-[var(--color-brand)] text-white text-xs font-medium leading-4 rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[var(--color-brand-hover)] transition-colors flex items-center gap-2 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
           >
             Add a new stage
             <Plus className="w-4 h-4" />
@@ -809,7 +810,7 @@ const PipelineEditorInner = forwardRef<PipelineEditorHandle>(function PipelineEd
 
         {/* Bottom hint */}
         <div className={`absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10 transition-opacity duration-200 ${addStep !== "idle" ? "opacity-0" : ""}`}>
-          <div className="px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#d5c8b8] text-xs text-[#7b6f60]">
+          <div className="px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#d5c8b8] text-xs text-[var(--color-text-muted)]">
             Drag from a port to connect. Drag a wire endpoint to rewire. Click a wire to disconnect.
           </div>
         </div>

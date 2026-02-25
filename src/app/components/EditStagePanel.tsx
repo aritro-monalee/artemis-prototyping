@@ -65,23 +65,23 @@ export function EditStagePanel({
       initial={{ width: 0, opacity: 0 }}
       animate={{ width: 352, opacity: 1 }}
       exit={{ width: 0, opacity: 0 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="bg-[#fefbf7] border-l border-[#d5c8b8] flex flex-col h-full shrink-0 overflow-hidden"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-[var(--color-bg)] border-l border-[#d5c8b8] flex flex-col h-full shrink-0 overflow-hidden"
     >
       <div className="w-[352px] flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center h-16 min-h-[64px] px-4 border-b border-[#d7cfc5] shrink-0">
+        <div className="flex items-center h-16 min-h-[64px] px-4 border-b border-[var(--color-border)] shrink-0">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
               className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer"
             >
-              <PanelRightClose className="w-4 h-4 text-[#554e46]" />
+              <PanelRightClose className="w-4 h-4 text-[var(--color-text)]" />
             </button>
             <div className="w-2 flex items-center justify-center">
-              <div className="h-[15px] w-px bg-[#d7cfc5]" />
+              <div className="h-[15px] w-px bg-[var(--color-border)]" />
             </div>
-            <span className="text-sm font-medium text-[#554e46]">Editing Stage</span>
+            <span className="text-sm font-medium text-[var(--color-text)]">Editing Stage</span>
           </div>
         </div>
 
@@ -110,25 +110,25 @@ export function EditStagePanel({
             />
 
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-[#554e46]">
+              <span className="text-sm font-medium text-[var(--color-text)]">
                 Move to next stage when
               </span>
               <div className="flex items-center">
-                <button className="h-7 flex items-center gap-2 px-2 rounded-l-lg rounded-r-[2px] border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-xs text-[#7b6f60] cursor-pointer hover:bg-[#f4f1ed] transition-colors">
+                <button className="h-7 flex items-center gap-2 px-2 rounded-l-lg rounded-r-[2px] border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-xs text-[var(--color-text-muted)] cursor-pointer hover:bg-[var(--color-surface)] transition-colors">
                   <span>credit application</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
-                <button className="h-7 flex items-center px-2 rounded-[2px] border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-xs text-[#7b6f60] cursor-pointer hover:bg-[#f4f1ed] transition-colors">
+                <button className="h-7 flex items-center px-2 rounded-[2px] border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-xs text-[var(--color-text-muted)] cursor-pointer hover:bg-[var(--color-surface)] transition-colors">
                   is
                 </button>
-                <button className="h-7 flex items-center gap-2 px-2 rounded-[2px] border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-xs text-[#7b6f60] cursor-pointer hover:bg-[#f4f1ed] transition-colors">
+                <button className="h-7 flex items-center gap-2 px-2 rounded-[2px] border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-xs text-[var(--color-text-muted)] cursor-pointer hover:bg-[var(--color-surface)] transition-colors">
                   <span>submitted</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
-                <button className="h-7 flex items-center justify-center p-[6px] rounded-l-[2px] rounded-r-lg border-[0.5px] border-[rgba(0,0,0,0.16)] bg-[rgba(255,255,255,0.4)] shadow-[0_1px_2px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[#f4f1ed] transition-colors">
+                <button className="h-7 flex items-center justify-center p-[6px] rounded-l-[2px] rounded-r-lg border-[0.5px] border-[rgba(0,0,0,0.16)] bg-[rgba(255,255,255,0.4)] shadow-[0_1px_2px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[var(--color-surface)] transition-colors">
                   <X className="w-4 h-4 text-[#998d7d]" />
                 </button>
-                <button className="h-7 flex items-center justify-center p-[6px] rounded-l-[2px] rounded-r-lg cursor-pointer hover:bg-[#f4f1ed] transition-colors">
+                <button className="h-7 flex items-center justify-center p-[6px] rounded-l-[2px] rounded-r-lg cursor-pointer hover:bg-[var(--color-surface)] transition-colors">
                   <Plus className="w-4 h-4 text-[#998d7d]" />
                 </button>
               </div>
@@ -158,7 +158,7 @@ export function EditStagePanel({
         </div>
 
         {/* Footer buttons — pinned at bottom */}
-        <div className="flex items-center justify-end gap-1 shrink-0 px-3 py-3 border-t border-[#d7cfc5]">
+        <div className="flex items-center justify-end gap-1 shrink-0 px-3 py-3 border-t border-[var(--color-border)]">
           <MLButton
             variant="destructive"
             size="sm"
@@ -221,13 +221,13 @@ function DeleteConfirmDialog({
         <h3 className="text-base font-semibold text-[#1a1a1a] mb-1">
           Are you sure you want to delete this stage?
         </h3>
-        <p className="text-sm text-[#7b6f60] mb-6">
+        <p className="text-sm text-[var(--color-text-muted)] mb-6">
           This action cannot be undone.
         </p>
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={onCancel}
-            className="h-9 px-4 rounded-lg border border-[#d5c8b8] bg-white text-sm font-medium text-[#554e46] cursor-pointer hover:bg-[#f4f1ed] transition-colors"
+            className="h-9 px-4 rounded-lg border border-[#d5c8b8] bg-white text-sm font-medium text-[var(--color-text)] cursor-pointer hover:bg-[var(--color-surface)] transition-colors"
           >
             Cancel
           </button>

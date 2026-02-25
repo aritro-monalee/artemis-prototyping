@@ -193,11 +193,11 @@ function LabelCell({
       <AnimatePresence>
         {popoverOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 8 }}
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 8 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-[#fefbf7] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
             style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -314,7 +314,7 @@ function NewLabelPopover({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 8 }}
         transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-[#fefbf7] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
         style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -407,13 +407,13 @@ function NewLabelPopover({
         <div className="flex items-center justify-between p-[8px]">
           <button
             onClick={handleSave}
-            className="text-[12px] font-medium leading-[16px] text-[#7b6f60] cursor-pointer hover:text-cream-900 transition-colors"
+            className="text-[12px] font-medium leading-[16px] text-[var(--color-text-muted)] cursor-pointer hover:text-cream-900 transition-colors"
           >
             Save
           </button>
           <button
             onClick={onCancel}
-            className="text-[12px] font-medium leading-[16px] text-[rgba(123,111,96,0.4)] cursor-pointer hover:text-[#7b6f60] transition-colors"
+            className="text-[12px] font-medium leading-[16px] text-[rgba(123,111,96,0.4)] cursor-pointer hover:text-[var(--color-text-muted)] transition-colors"
           >
             Cancel
           </button>

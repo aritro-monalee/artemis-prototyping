@@ -38,6 +38,8 @@ import {
   type ActivityItem,
   type StageHistoryEntry,
 } from "@/app/data/projects";
+import { projectDetailExtras, defaultDetailExtras } from "@/app/data/seed/extras";
+import { parseAddress } from "@/app/data/filters";
 
 // ── sessionStorage keys ──
 
@@ -48,63 +50,6 @@ const SETTINGS_KEY = "artemis-settings";
 const PROJECT_DATA_KEY = "artemis-project-data";
 const CHECKLIST_TEMPLATE_KEY = "artemis-checklist-template";
 const CHECKLIST_ORDER_KEY = "artemis-checklist-order";
-
-// ── Detail extras (static enrichment for detail pages) ──
-
-const projectDetailExtras: Record<string, Partial<ProjectDetailData>> = {
-  p1: {
-    financePayment: "$0/Month",
-    systemSizeKw: "0kW",
-    estOffset: "0%",
-    projectType: "Solar",
-    panelModel: "Mission Solar 410w",
-    panelCount: 15,
-    inverterModel: "Tesla Solar Inverter",
-    inverterCount: 1,
-    batteryModel: "Franklin aPower 2",
-    batteryCount: 2,
-    addersTotal: 0,
-    financingTotal: 22118.05,
-    totalLoan: 20000.0,
-    term: "Included",
-    lender: "Goodleap",
-    netPricePerSquare: 3.63,
-    pricePerSquare: 6.05,
-    estimatedProduction: "5,558kWh",
-  },
-};
-
-const defaultDetailExtras: Omit<ProjectDetailData, keyof ProjectCardData> = {
-  financePayment: "$0/Month",
-  systemSizeKw: "0kW",
-  estOffset: "0%",
-  projectType: "Solar",
-  panelModel: "Mission Solar 410w",
-  panelCount: 15,
-  inverterModel: "Tesla Solar Inverter",
-  inverterCount: 1,
-  batteryModel: "Franklin aPower 2",
-  batteryCount: 2,
-  addersTotal: 0,
-  financingTotal: 22118.05,
-  totalLoan: 20000.0,
-  term: "Included",
-  lender: "Goodleap",
-  netPricePerSquare: 3.63,
-  pricePerSquare: 6.05,
-  estimatedProduction: "5,558kWh",
-};
-
-function parseAddress(address: string) {
-  const parts = address.split(",").map((s) => s.trim());
-  if (parts.length >= 2) {
-    const city = parts[parts.length - 2];
-    const stateZip = parts[parts.length - 1];
-    const stateMatch = stateZip.match(/^([A-Z]{2})\s/);
-    return { city, state: stateMatch ? stateMatch[1] : "" };
-  }
-  return { city: "", state: "" };
-}
 
 // ── Per-project extra data ──
 
@@ -122,13 +67,13 @@ interface ProjectExtraData {
 
 function defaultProjectExtra(): ProjectExtraData {
   return {
-    notes: JSON.parse(JSON.stringify(initialNotes)),
-    designComments: JSON.parse(JSON.stringify(initialDesignComments)),
-    checklistDone: JSON.parse(JSON.stringify(initialChecklistDone)),
+    notes: structuredClone(initialNotes),
+    designComments: structuredClone(initialDesignComments),
+    checklistDone: structuredClone(initialChecklistDone),
     placedLabels: [],
     labelVisibility: Object.fromEntries(predefinedLabels.map((l) => [l.id, "public" as const])),
     panelCount: 23,
-    activities: JSON.parse(JSON.stringify(initialActivities)),
+    activities: structuredClone(initialActivities),
     projectType: "Solar",
     stageHistory: [],
   };
@@ -583,18 +528,36 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
 
   // ── Derived ──
 
-  const filterOptions = useMemo(
-    () => ({
-      installers: [...new Set(projects.map((p) => p.installer))].sort(),
-      teams: [...new Set(projects.map((p) => p.team))].sort(),
-      representatives: [...new Set(projects.map((p) => p.representative))].sort(),
-      statuses: [...new Set(projects.map((p) => p.status))].sort(),
-      states: [...new Set(projects.map((p) => parseAddress(p.address).state).filter(Boolean))].sort(),
-      cities: [...new Set(projects.map((p) => parseAddress(p.address).city).filter(Boolean))].sort(),
-      utilityCompanies: [...new Set(projects.map((p) => p.utilityCompany))].sort(),
-    }),
-    [projects]
-  );
+  const filterOptions = useMemo(() => {
+    const installers = new Set<string>();
+    const teams = new Set<string>();
+    const representatives = new Set<string>();
+    const statuses = new Set<string>();
+    const states = new Set<string>();
+    const cities = new Set<string>();
+    const utilityCompanies = new Set<string>();
+
+    for (const p of projects) {
+      installers.add(p.installer);
+      teams.add(p.team);
+      representatives.add(p.representative);
+      statuses.add(p.status);
+      utilityCompanies.add(p.utilityCompany);
+      const { city, state } = parseAddress(p.address);
+      if (state) states.add(state);
+      if (city) cities.add(city);
+    }
+
+    return {
+      installers: [...installers].sort(),
+      teams: [...teams].sort(),
+      representatives: [...representatives].sort(),
+      statuses: [...statuses].sort(),
+      states: [...states].sort(),
+      cities: [...cities].sort(),
+      utilityCompanies: [...utilityCompanies].sort(),
+    };
+  }, [projects]);
 
   const recentProjects = useMemo(
     () => projects.slice(0, 3).map((p) => ({ id: p.id, name: `${p.ownerName}, ${p.address}` })),

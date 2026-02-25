@@ -21,7 +21,7 @@ import { MLTab } from "@/app/lib/monalee-ui/components/MLTab";
 import { MLInput } from "@/app/lib/monalee-ui/components/MLInput";
 import { MLSelect } from "@/app/lib/monalee-ui/components/MLSelect";
 import { DatePicker } from "@/app/lib/monalee-ui/components/MLDatePicker";
-import { listColumnLabels } from "./ProjectsView";
+import { listColumnLabels } from "./ListView";
 import type { ProjectFilters } from "@/app/data/projects";
 import { useProjectStore } from "@/app/store/ProjectStore";
 
@@ -44,8 +44,6 @@ export function FiltersPanel({
 }: FiltersPanelProps) {
   const store = useProjectStore();
   const { filterOptions } = store;
-  const [filterSearch, setFilterSearch] = useState("");
-
   const [projectOpen, setProjectOpen] = useState(true);
   const [orgOpen, setOrgOpen] = useState(true);
   const [locationOpen, setLocationOpen] = useState(true);
@@ -61,23 +59,24 @@ export function FiltersPanel({
       initial={{ width: 0, opacity: 0 }}
       animate={{ width: 320, opacity: 1 }}
       exit={{ width: 0, opacity: 0 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="bg-[#fefbf7] border-l border-[#d5c8b8] flex flex-col h-full shrink-0 overflow-hidden"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-[var(--color-bg)] border-l border-[#d5c8b8] flex flex-col h-full shrink-0 overflow-hidden"
     >
       <div className="w-[320px] flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center h-16 min-h-[64px] px-4 border-b border-[#d7cfc5] shrink-0">
+        <div className="flex items-center h-16 min-h-[64px] px-4 border-b border-[var(--color-border)] shrink-0">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer"
+              aria-label="Close panel"
+              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
             >
-              <PanelRightClose className="w-4 h-4 text-[#554e46]" />
+              <PanelRightClose className="w-4 h-4 text-[var(--color-text)]" />
             </button>
             <div className="w-2 flex items-center justify-center">
-              <div className="h-[15px] w-px bg-[#d7cfc5]" />
+              <div className="h-[15px] w-px bg-[var(--color-border)]" />
             </div>
-            <span className="text-sm font-medium text-[#554e46]">Filters</span>
+            <span className="text-sm font-medium text-[var(--color-text)]">Filters</span>
           </div>
         </div>
 
@@ -86,17 +85,15 @@ export function FiltersPanel({
           {/* Search */}
           <MLInput
             placeholder="Search for a filter"
-            prefix={<Search className="w-4 h-4 text-[#7b6f60]" />}
+            prefix={<Search className="w-4 h-4 text-[var(--color-text-muted)]" />}
             size="sm"
-            value={filterSearch}
-            onChange={(e) => setFilterSearch(e.target.value)}
           />
 
           {/* Hidden columns — list view only */}
           {isListView && hiddenColumns.length > 0 && (
             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
               <span
-                className="text-[#554e46] font-medium whitespace-nowrap mr-0.5 shrink-0"
+                className="text-[var(--color-text)] font-medium whitespace-nowrap mr-0.5 shrink-0"
                 style={{ fontSize: "12px", lineHeight: "16px" }}
               >
                 Hidden Columns
@@ -107,9 +104,9 @@ export function FiltersPanel({
                   onClick={() => onShowColumn(colId)}
                   className="bg-[rgba(85,78,70,0.04)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] p-1 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center gap-1 overflow-clip cursor-pointer hover:bg-[rgba(85,78,70,0.08)] transition-colors shrink-0"
                 >
-                  <Eye className="w-[14px] h-[14px] text-[#554e46] shrink-0" />
+                  <Eye className="w-[14px] h-[14px] text-[var(--color-text)] shrink-0" />
                   <span
-                    className="font-medium text-[#554e46] text-center whitespace-nowrap"
+                    className="font-medium text-[var(--color-text)] text-center whitespace-nowrap"
                     style={{ fontSize: "12px", lineHeight: "16px" }}
                   >
                     {store.columnLabels[colId] || listColumnLabels[colId] || colId}
@@ -204,7 +201,7 @@ export function FiltersPanel({
               onFilterChange("maxDaysInStage", "");
             }}
           >
-            <p className="text-[11px] text-[#ac9b85] -mt-1 mb-2">Pick a date to see the pipeline at that point. Use both to see a window of activity.</p>
+            <p className="text-[11px] text-[var(--color-text-secondary)] -mt-1 mb-2">Pick a date to see the pipeline at that point. Use both to see a window of activity.</p>
             <FilterField label="Start Date">
               <DatePicker
                 placeholder="Pick a date"
@@ -417,16 +414,17 @@ function FilterSection({
             animate={{ rotate: open ? 0 : -90 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            <ChevronDown className="w-3 h-3 text-[#554e46]" />
+            <ChevronDown className="w-3 h-3 text-[var(--color-text)]" />
           </motion.div>
-          <span className="flex-1 text-sm font-medium text-[#554e46] text-left leading-none">
+          <span className="flex-1 text-sm font-medium text-[var(--color-text)] text-left leading-none">
             {title}
           </span>
         </button>
         {onReset && (
           <button
             onClick={onReset}
-            className="w-5 h-5 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer shrink-0"
+            aria-label={`Reset ${title}`}
+            className="w-5 h-5 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
             title={`Reset ${title}`}
           >
             <RotateCcw className="w-3 h-3 text-[#998d7d]" />
@@ -439,7 +437,7 @@ function FilterSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             onAnimationStart={() => setAnimating(true)}
             onAnimationComplete={() => setAnimating(false)}
             style={{ overflow: animating ? "hidden" : "visible" }}

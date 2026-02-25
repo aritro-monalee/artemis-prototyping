@@ -37,7 +37,7 @@ export function PipelineColumn({ stage, projects, onOpenProject, onAddTag, onEdi
   return (
     <div
       ref={setNodeRef}
-      className={`shrink-0 w-[360px] flex flex-col bg-[#f4f1ed] border-[0.5px] border-[rgba(0,0,0,0.08)] rounded-lg p-4 transition-colors ${
+      className={`shrink-0 w-[360px] flex flex-col bg-[var(--color-surface)] border-[0.5px] border-[rgba(0,0,0,0.08)] rounded-lg p-4 transition-colors ${
         isOver ? "bg-[#efe9e1]" : ""
       }`}
     >
@@ -48,16 +48,17 @@ export function PipelineColumn({ stage, projects, onOpenProject, onAddTag, onEdi
             className="w-[6px] h-[6px] rounded-full shrink-0"
             style={{ backgroundColor: stage.color }}
           />
-          <span className="text-xs font-medium text-[#554e46]">
+          <span className="text-xs font-medium text-[var(--color-text)]">
             {stage.title}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="text-[#998d7d] hover:text-[#554e46] transition-colors cursor-pointer">
+          <button aria-label="Filter" className="text-[#998d7d] hover:text-[var(--color-text)] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30">
             <ListFilter className="w-4 h-4" />
           </button>
           <button
-            className="text-[#998d7d] hover:text-[#554e46] transition-colors cursor-pointer"
+            aria-label="More options"
+            className="text-[#998d7d] hover:text-[var(--color-text)] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
             onClick={() => onEditStage?.(stage.id)}
           >
             <MoreHorizontal className="w-4 h-4" />

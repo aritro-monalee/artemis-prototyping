@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Check, ArrowUp, SquarePen, Trash2, Sun } from "lucide-react";
+import { Plus, Check, ArrowUp, SquarePen, Trash2 } from "lucide-react";
 import type { ProjectCardData, ProjectDetailData } from "@/app/data/projects";
 import { getProjectDetail } from "@/app/data/projects";
 import { useSortable } from "@dnd-kit/sortable";
@@ -10,11 +10,8 @@ import { Tag } from "./Tag";
 import { ProjectOverviewCard, DetailsContent } from "./ProjectDetailSidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProjectStore } from "@/app/store/ProjectStore";
-
-type TagType = "On Hold" | "Lost" | "Change Order";
-
-const TAG_LAYOUT_TRANSITION = { layout: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const } };
-
+import { TAG_LAYOUT_TRANSITION } from "@/app/data/constants";
+import { useTagFlow, type TagType } from "@/app/hooks/useTagFlow";
 
 interface ProjectCardProps {
   project: ProjectCardData;
@@ -145,18 +142,19 @@ export function ProjectCard({
           currentStageColor={currentStageColor}
           disableDrag={disableDrag}
         />
-        {createPortal(
-          <AnimatePresence>
-            {sidebarOpen && sidebarDetail && popoverPos && (
-              <SidebarPopoverContent
-                key={project.id}
-                project={sidebarDetail}
-                popoverPos={popoverPos}
-              />
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
+        {typeof document !== "undefined" &&
+          createPortal(
+            <AnimatePresence>
+              {sidebarOpen && sidebarDetail && popoverPos && (
+                <SidebarPopoverContent
+                  key={project.id}
+                  project={sidebarDetail}
+                  popoverPos={popoverPos}
+                />
+              )}
+            </AnimatePresence>,
+            document.body
+          )}
     </motion.div>
   );
 }
@@ -243,90 +241,38 @@ function CardContent({
   const [localSelected, setLocalSelected] = useState(false);
   const selected = externalSelected ?? localSelected;
 
-  // Tag adding/editing flow: null → "picking" → "reasoning"
-  const [tagStep, setTagStep] = useState<null | "picking" | "reasoning">(null);
-  const [pendingTagType, setPendingTagType] = useState<TagType | null>(null);
-  const [tagReason, setTagReason] = useState("");
-  const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
-  const reasonInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const tagFlow = useTagFlow({
+    projectId: project.id,
+    tags: project.tags,
+    onAddTag,
+    onEditTag,
+    onDeleteTag,
+  });
 
-  // Tag action menu (edit/delete)
-  const [tagMenuIndex, setTagMenuIndex] = useState<number | null>(null);
+  const {
+    tagStep,
+    pendingTagType,
+    tagReason,
+    setTagReason,
+    tagMenuIndex,
+    setTagMenuIndex,
+    reasonInputRef,
+    tagPopoverOpen: popoverOpen,
+    dismissTagFlow: dismissAll,
+    handlePickTag,
+    handleSubmitTag,
+    handleEditTag,
+    handleDeleteTag,
+    resetTagFlow,
+    openTagPicker,
+  } = tagFlow;
+
   const tagMenuRef = useRef<HTMLDivElement>(null);
-
-  const popoverOpen = tagStep !== null || tagMenuIndex !== null;
-
-  // Focus the reason input when entering reasoning step
-  useEffect(() => {
-    if (tagStep === "reasoning" && reasonInputRef.current) {
-      reasonInputRef.current.focus();
-    }
-  }, [tagStep]);
-
-  // Dismiss all popovers
-  const dismissAll = () => {
-    if (tagStep) {
-      setTagStep(null);
-      setPendingTagType(null);
-      setTagReason("");
-      setEditingTagIndex(null);
-    }
-    if (tagMenuIndex !== null) {
-      setTagMenuIndex(null);
-    }
-  };
-
-  const handlePickTag = (type: TagType) => {
-    setPendingTagType(type);
-    setTagStep("reasoning");
-    if (editingTagIndex === null) setTagReason("");
-  };
-
-  const handleSubmitTag = () => {
-    if (pendingTagType) {
-      const tagData = {
-        type: pendingTagType,
-        reason: tagReason.trim() || undefined,
-      };
-      if (editingTagIndex !== null && onEditTag) {
-        onEditTag(project.id, editingTagIndex, tagData);
-      } else if (onAddTag) {
-        onAddTag(project.id, tagData);
-      }
-    }
-    setTagStep(null);
-    setPendingTagType(null);
-    setTagReason("");
-    setEditingTagIndex(null);
-  };
-
-  const handleEditTag = (index: number) => {
-    const tag = project.tags[index];
-    setTagMenuIndex(null);
-    setEditingTagIndex(index);
-    setPendingTagType(tag.type as TagType);
-    setTagReason(tag.reason || "");
-    setTagStep("picking");
-  };
-
-  const handleDeleteTag = (index: number) => {
-    if (onDeleteTag) {
-      onDeleteTag(project.id, index);
-    }
-    setTagMenuIndex(null);
-  };
-
-  const resetTagFlow = () => {
-    setTagStep(null);
-    setPendingTagType(null);
-    setTagReason("");
-    setEditingTagIndex(null);
-  };
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   return (
       <div
-        className={`relative h-[168px] flex flex-col bg-[#fefbf7] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] group/card ${disableDrag ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+        className={`relative h-[168px] flex flex-col bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] group/card ${disableDrag ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
         style={{
           boxShadow: selected
             ? "0 0 0 1px white, 0 0 0 2px #6e04bd, 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)"
@@ -359,7 +305,7 @@ function CardContent({
           {!disableDrag && (
             <div className="shrink-0">
               {selected ? (
-                <div className="w-[16px] h-[16px] rounded-[4px] bg-[#6e04bd] border-[0.5px] border-[#6e04bd] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center overflow-clip">
+                <div className="w-[16px] h-[16px] rounded-[4px] bg-[var(--color-brand)] border-[0.5px] border-[var(--color-brand)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center overflow-clip">
                   <Check
                     className="w-[14px] h-[14px] text-white"
                     strokeWidth={3}
@@ -372,7 +318,7 @@ function CardContent({
           )}
           <div className="flex-1 flex items-center justify-between min-w-0">
             <div className="flex items-center gap-[4px] leading-none text-sm min-w-0">
-              <span className="font-medium text-[#554e46] shrink-0">
+              <span className="font-medium text-[var(--color-text)] shrink-0">
                 {project.systemSize}
               </span>
               <span className="inline-flex overflow-hidden max-w-0 opacity-0 group-hover/card:max-w-[200px] group-hover/card:opacity-100 transition-[max-width,opacity] duration-200 ease-out font-normal text-[#998d7d] whitespace-nowrap">
@@ -380,7 +326,7 @@ function CardContent({
               </span>
             </div>
             <div className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.04)] p-[4px] rounded-[6px] shrink-0 flex items-center justify-center overflow-clip">
-              <span className="font-normal text-[#554e46] text-xs leading-none">
+              <span className="font-normal text-[var(--color-text)] text-xs leading-none">
                 {project.daysInStage} Days
               </span>
             </div>
@@ -403,14 +349,14 @@ function CardContent({
             <div className="w-full h-full rounded-[4px] border-[0.5px] border-[rgba(0,0,0,0.04)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] bg-[#d4c9b8] overflow-hidden">
               <div className="w-full h-full bg-gradient-to-br from-[#c5b89a] to-[#8a7d6b]" />
             </div>
-            <div className="absolute -bottom-[2px] -right-[2px] w-[10px] h-[10px] rounded-full bg-[#6e04bd] border-[1.5px] border-[#fefbf7]" />
+            <div className="absolute -bottom-[2px] -right-[2px] w-[10px] h-[10px] rounded-full bg-[var(--color-brand)] border-[1.5px] border-[var(--color-bg)]" />
           </div>
           <div className="flex-1 flex flex-col justify-between self-stretch min-w-0 leading-none">
             <div className="flex flex-col gap-[6px]">
-              <p className="font-normal text-[#554e46] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
+              <p className="font-normal text-[var(--color-text)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
                 {project.address}
               </p>
-              <p className="font-normal text-[#7b6f60] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
+              <p className="font-normal text-[var(--color-text-muted)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
                 {project.ownerName}
               </p>
             </div>
@@ -425,9 +371,9 @@ function CardContent({
         {/* Time-travel: current stage indicator */}
         {currentStageName && (
           <div className="shrink-0 flex items-center gap-[6px] px-[12px] py-[5px] bg-[rgba(240,232,220,0.4)] border-t-[0.5px] border-[rgba(0,0,0,0.08)]">
-            <div className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: currentStageColor ?? "#ac9b85" }} />
-            <span className="text-[11px] text-[#ac9b85]">
-              Now in <span className="font-medium text-[#554e46]">{currentStageName}</span>
+            <div className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: currentStageColor ?? "var(--color-text-secondary)" }} />
+            <span className="text-[11px] text-[var(--color-text-secondary)]">
+              Now in <span className="font-medium text-[var(--color-text)]">{currentStageName}</span>
             </span>
           </div>
         )}
@@ -475,12 +421,10 @@ function CardContent({
                     </div>
                   ))}
                   <button
-                    className="flex items-center gap-[2px] text-[#ac9b85] hover:text-[#7b6f60] transition-colors cursor-pointer"
+                    className="flex items-center gap-[2px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-muted)] transition-colors cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setTagMenuIndex(null);
-                      setEditingTagIndex(null);
-                      setTagStep("picking");
+                      openTagPicker();
                     }}
                   >
                     <Plus className="w-[16px] h-[16px]" />
@@ -502,7 +446,7 @@ function CardContent({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.12, ease: "easeOut" }}
-                className="absolute left-[12px] right-[12px] -top-[8px] z-30 bg-[#fefbf7] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] whitespace-nowrap"
+                className="absolute left-[12px] right-[12px] -top-[8px] z-30 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] whitespace-nowrap origin-bottom-left"
                 style={{
                   boxShadow:
                     "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)",
@@ -524,9 +468,9 @@ function CardContent({
                   className="flex items-center gap-[10px] px-[8px] py-[6px] w-full cursor-pointer hover:bg-black/[0.03] transition-colors border-b-[0.5px] border-[#d5c8b8]"
                   onClick={() => handleEditTag(tagMenuIndex)}
                 >
-                  <SquarePen className="w-[14px] h-[14px] text-[#7b6f60] shrink-0" />
+                  <SquarePen className="w-[14px] h-[14px] text-[var(--color-text-muted)] shrink-0" />
                   <span
-                    className="font-normal text-[#7b6f60] overflow-hidden text-ellipsis whitespace-nowrap"
+                    className="font-normal text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap"
                     style={{ fontSize: "12px", lineHeight: "16px" }}
                   >
                     Edit Tag
@@ -536,9 +480,9 @@ function CardContent({
                   className="flex items-center gap-[10px] px-[8px] py-[6px] w-full cursor-pointer hover:bg-black/[0.03] transition-colors"
                   onClick={() => handleDeleteTag(tagMenuIndex)}
                 >
-                  <Trash2 className="w-[14px] h-[14px] text-[#7b6f60] shrink-0" />
+                  <Trash2 className="w-[14px] h-[14px] text-[var(--color-text-muted)] shrink-0" />
                   <span
-                    className="font-normal text-[#7b6f60] overflow-hidden text-ellipsis whitespace-nowrap"
+                    className="font-normal text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap"
                     style={{ fontSize: "12px", lineHeight: "16px" }}
                   >
                     Delete Tag
@@ -557,7 +501,7 @@ function CardContent({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
-                className="absolute -top-[8px] left-[12px] right-[12px] z-20 bg-[#fefbf7] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
+                className="absolute -top-[8px] left-[12px] right-[12px] z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
                 style={{
                   boxShadow:
                     "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)",
@@ -613,7 +557,7 @@ function CardContent({
                       <div className="flex-1 flex items-center gap-[4px] min-w-0 overflow-clip">
                         <input
                           ref={reasonInputRef}
-                          className="flex-1 min-w-0 bg-transparent outline-none font-normal text-[#7b6f60] placeholder:text-[#7b6f60] overflow-hidden text-ellipsis whitespace-nowrap"
+                          className="flex-1 min-w-0 bg-transparent outline-none font-normal text-[var(--color-text-muted)] placeholder:text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap"
                           style={{ fontSize: "12px", lineHeight: 1 }}
                           placeholder="Add a reason (optional)"
                           value={tagReason}
@@ -624,7 +568,7 @@ function CardContent({
                           }}
                         />
                         <button
-                          className="shrink-0 bg-[#6e04bd] border-[0.417px] border-[rgba(255,255,255,0.2)] rounded-[82.5px] flex items-center justify-center cursor-pointer hover:bg-[#5c03a0] transition-colors"
+                          className="shrink-0 bg-[var(--color-brand)] border-[0.417px] border-[rgba(255,255,255,0.2)] rounded-[82.5px] flex items-center justify-center cursor-pointer hover:bg-[var(--color-brand-hover)] transition-colors"
                           style={{
                             padding: "3.333px",
                             boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",

@@ -57,7 +57,7 @@ export function GeneralSettingsForm() {
     <div className="flex flex-col gap-8 max-w-[1024px] pb-16">
       {/* ── General Settings ── */}
       <section className="flex flex-col gap-5">
-        <h2 className="text-base font-semibold text-[#554e46]">
+        <h2 className="text-base font-semibold text-[var(--color-text)]">
           General Settings
         </h2>
 
@@ -99,7 +99,7 @@ export function GeneralSettingsForm() {
 
       {/* ── Editor Settings ── */}
       <section className="flex flex-col gap-5">
-        <h2 className="text-base font-semibold text-[#554e46]">
+        <h2 className="text-base font-semibold text-[var(--color-text)]">
           Editor Settings
         </h2>
 
@@ -131,7 +131,7 @@ export function GeneralSettingsForm() {
 
       {/* ── Utility Settings ── */}
       <section className="flex flex-col gap-5">
-        <h2 className="text-base font-semibold text-[#554e46]">
+        <h2 className="text-base font-semibold text-[var(--color-text)]">
           Utility Settings
         </h2>
 

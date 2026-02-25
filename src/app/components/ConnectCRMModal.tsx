@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ArrowRight, Check, Loader2, Download, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MLButton, MLInput, MLSelect, MLMultiSelect } from "@/app/lib/monalee-ui";
@@ -15,6 +16,7 @@ import {
   ARTEMIS_FIELD_OPTIONS,
 } from "@/app/data/crm-integrations";
 import { allStages } from "@/app/data/projects";
+import { PROVIDER_LOGOS, stepVariants } from "@/app/data/constants";
 
 /* ─── Illustration (same as AddWebhookModal) ─── */
 
@@ -95,29 +97,6 @@ function CrmIllustration() {
     </div>
   );
 }
-
-/* ─── Provider logos ─── */
-
-const PROVIDER_LOGOS: Record<CRMProvider, string> = {
-  salesforce:
-    "https://cdn.brandfetch.io/idVE84WdIN/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1668516062674",
-  pipedrive:
-    "https://cdn.brandfetch.io/idZG_U1qqs/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1667601678560",
-};
-
-/* ─── Step animation variants (same as AddWebhookModal) ─── */
-
-const stepVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 80 : -80,
-    opacity: 0,
-  }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({
-    x: direction > 0 ? -80 : 80,
-    opacity: 0,
-  }),
-};
 
 /* ─── Stage options for dropdowns ─── */
 
@@ -288,13 +267,13 @@ export function ConnectCRMModal({ onClose, onConnect, editingConnection }: Conne
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="fixed inset-0 z-50 bg-[#f4f1ed]/60 backdrop-blur-md flex items-center justify-center overflow-y-auto"
+      className="fixed inset-0 z-50 bg-[var(--color-surface)]/60 backdrop-blur-md flex items-center justify-center overflow-y-auto"
     >
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 24, scale: 0.98 }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
         className="w-[800px] max-w-full flex flex-col items-center gap-12 px-6 py-10"
       >
         {/* Header */}
@@ -307,7 +286,7 @@ export function ConnectCRMModal({ onClose, onConnect, editingConnection }: Conne
           <span className="text-xs text-base-muted-foreground opacity-70">
             Organization
           </span>
-          <h1 className="text-2xl font-bold text-black tracking-[-0.48px]">
+          <h1 className="text-2xl font-bold text-black tracking-[-0.48px] text-balance">
             {isEditing ? "Edit Mappings" : "Connect a CRM"}
           </h1>
         </motion.div>
@@ -368,15 +347,17 @@ export function ConnectCRMModal({ onClose, onConnect, editingConnection }: Conne
                     <button
                       key={key}
                       onClick={() => handleSelectProvider(key)}
-                      className={`flex items-center gap-3 p-4 rounded-lg border transition-all text-left ${
+                      className={`flex items-center gap-3 p-4 rounded-lg border transition-[border-color,box-shadow] text-left ${
                         provider === key
                           ? "border-base-primary bg-base-primary/[0.04] ring-1 ring-base-primary/20"
                           : "border-base-border hover:border-base-primary/40 bg-white"
                       }`}
                     >
-                      <img
+                      <Image
                         src={PROVIDER_LOGOS[key as CRMProvider]}
                         alt={info.name}
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded-md object-cover shrink-0"
                       />
                       <div className="flex flex-col">
@@ -695,7 +676,7 @@ export function ConnectCRMModal({ onClose, onConnect, editingConnection }: Conne
                 >
                   <button
                     onClick={() => setSyncMode("import")}
-                    className={`flex flex-col gap-2 p-4 rounded-lg border transition-all text-left ${
+                    className={`flex flex-col gap-2 p-4 rounded-lg border transition-[border-color,box-shadow] text-left ${
                       syncMode === "import"
                         ? "border-base-primary bg-base-primary/[0.04] ring-1 ring-base-primary/20"
                         : "border-base-border hover:border-base-primary/40 bg-white"
@@ -714,7 +695,7 @@ export function ConnectCRMModal({ onClose, onConnect, editingConnection }: Conne
                   </button>
                   <button
                     onClick={() => setSyncMode("sync")}
-                    className={`flex flex-col gap-2 p-4 rounded-lg border transition-all text-left ${
+                    className={`flex flex-col gap-2 p-4 rounded-lg border transition-[border-color,box-shadow] text-left ${
                       syncMode === "sync"
                         ? "border-base-primary bg-base-primary/[0.04] ring-1 ring-base-primary/20"
                         : "border-base-border hover:border-base-primary/40 bg-white"

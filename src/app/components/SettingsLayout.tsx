@@ -53,18 +53,19 @@ export function SettingsLayout({
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col overflow-hidden min-w-0 border-l border-[#d7cfc5] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0 border-l border-[var(--color-border)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           {/* Top bar */}
-          <header className="h-16 min-h-[64px] border-b border-[#d7cfc5] bg-[#fefbf7] flex items-center justify-between px-4 shrink-0 sticky top-0 z-10">
+          <header className="h-16 min-h-[64px] border-b border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-between px-4 shrink-0 sticky top-0 z-10">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSidebarOpen((v) => !v)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer hover:bg-cream-100 transition-colors"
+                aria-label="Toggle sidebar"
+                className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer hover:bg-cream-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
               >
-                <PanelLeft className="w-4 h-4 text-[#554e46]" />
+                <PanelLeft className="w-4 h-4 text-[var(--color-text)]" />
               </button>
               <div className="w-2 flex items-center justify-center">
-                <div className="h-[15px] w-px bg-[#d7cfc5]" />
+                <div className="h-[15px] w-px bg-[var(--color-border)]" />
               </div>
               {/* Breadcrumb */}
               <div className="flex items-center gap-2.5">
@@ -73,13 +74,13 @@ export function SettingsLayout({
                   return (
                     <div key={i} className="flex items-center gap-2.5">
                       {i > 0 && (
-                        <ChevronRight className="w-[15px] h-[15px] text-[#7b6f60]" />
+                        <ChevronRight className="w-[15px] h-[15px] text-[var(--color-text-muted)]" />
                       )}
                       <span
                         className={`text-sm leading-5 ${
                           isLast
-                            ? "font-normal text-[#554e46]"
-                            : "font-normal text-[#7b6f60]"
+                            ? "font-normal text-[var(--color-text)]"
+                            : "font-normal text-[var(--color-text-muted)]"
                         }`}
                       >
                         {crumb}
@@ -90,34 +91,34 @@ export function SettingsLayout({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer hover:bg-cream-100 transition-colors">
-                <Bell className="w-4 h-4 text-[#554e46]" />
+              <button aria-label="Notifications" className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer hover:bg-cream-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30">
+                <Bell className="w-4 h-4 text-[var(--color-text)]" />
               </button>
-              <div className="w-6 h-6 rounded-lg bg-[#f4f1ed] flex items-center justify-center cursor-pointer overflow-hidden">
-                <span className="text-sm font-normal text-[#554e46] leading-5">E</span>
+              <div className="w-6 h-6 rounded-lg bg-[var(--color-surface)] flex items-center justify-center cursor-pointer overflow-hidden">
+                <span className="text-sm font-normal text-[var(--color-text)] leading-5">E</span>
               </div>
             </div>
           </header>
 
           {/* Settings content area */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-[#fefbf7]">
+          <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">
             {/* Sticky header: title + tabs */}
-            <div className="shrink-0 px-8 pt-8 bg-[#fefbf7]">
+            <div className="shrink-0 px-8 pt-8 bg-[var(--color-bg)]">
               {/* Title row: title + Save Changes */}
               <div className="flex items-center justify-between">
-                <h1 className="text-[30px] font-bold text-[#554e46] leading-9 tracking-[0px]">
+                <h1 className="text-[30px] font-bold text-[var(--color-text)] leading-9 tracking-[0px] text-balance">
                   {title}
                 </h1>
                 <button
                   onClick={onSave}
-                  className="h-9 px-4 py-2 bg-[#6e04bd] text-white text-sm font-medium leading-5 rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[#5c03a0] transition-colors"
+                  className="h-9 px-4 py-2 bg-[var(--color-brand)] text-white text-sm font-medium leading-5 rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer hover:bg-[var(--color-brand-hover)] transition-colors"
                 >
                   Save Changes
                 </button>
               </div>
 
               {/* Underline tab navigation */}
-              <div className="border-b border-[#d7cfc5] flex items-start mt-0">
+              <div className="border-b border-[var(--color-border)] flex items-start mt-0">
                 <div className="flex items-center flex-1 max-w-[1304px]">
                   {tabs.map((tab) => {
                     const isActive = tab.id === activeTab;
@@ -127,7 +128,7 @@ export function SettingsLayout({
                         onClick={() => onTabChange(tab.id)}
                         className={`relative flex items-center justify-center py-1.5 cursor-pointer border-b-2 ${
                           isActive
-                            ? "border-[#6e04bd]"
+                            ? "border-[var(--color-brand)]"
                             : "border-transparent"
                         }`}
                       >
@@ -135,8 +136,8 @@ export function SettingsLayout({
                           <span
                             className={`text-sm leading-5 ${
                               isActive
-                                ? "text-[#554e46]"
-                                : "text-[#7b6f60]"
+                                ? "text-[var(--color-text)]"
+                                : "text-[var(--color-text-muted)]"
                             }`}
                           >
                             {tab.label}

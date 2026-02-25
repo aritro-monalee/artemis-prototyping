@@ -21,6 +21,7 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { AddWebhookModal } from "./AddWebhookModal";
 import { IntegrationsSettings } from "./IntegrationsSettings";
+import { EVENT_TYPE_OPTIONS } from "@/app/data/constants";
 
 interface PostsaleStage {
   key: string;
@@ -79,21 +80,6 @@ const INITIAL_WEBHOOKS: Webhook[] = [
     eventTypes: "project-created",
     active: true,
   },
-];
-
-const EVENT_TYPE_OPTIONS = [
-  { label: "Project Created", value: "project-created" },
-  { label: "Project Updated", value: "project-updated" },
-  { label: "Contract Signed", value: "contract-signed" },
-  { label: "Contract Change Order Sent", value: "contract-change-order-sent" },
-  { label: "Credit Application Submitted", value: "credit-application-submitted" },
-  { label: "Pre Sale Status Updated", value: "pre-sale-status-updated" },
-  { label: "Application Decision", value: "application-decision" },
-  { label: "Post Sale Status Updated", value: "post-sale-status-updated" },
-  { label: "User Created", value: "user-created" },
-  { label: "User Updated", value: "user-updated" },
-  { label: "User Deleted", value: "user-deleted" },
-  { label: "Energy Audit Updated", value: "energy-audit-updated" },
 ];
 
 const PAYLOAD_EXAMPLES: Record<string, object> = {

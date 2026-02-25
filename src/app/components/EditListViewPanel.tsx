@@ -37,7 +37,7 @@ import { MLTab } from "@/app/lib/monalee-ui/components/MLTab";
 import { MLSwitch } from "@/app/lib/monalee-ui/components/MLSwitch";
 import { MLInput } from "@/app/lib/monalee-ui/components/MLInput";
 import { MLButton } from "@/app/lib/monalee-ui/components/MLButton";
-import { listColumns } from "./ProjectsView";
+import { listColumns } from "./ListView";
 import type { CustomField } from "@/app/data/projects";
 
 const fieldTypeOptions: { id: CustomField["type"]; label: string; icon: React.ReactNode }[] = [
@@ -50,13 +50,13 @@ const fieldTypeOptions: { id: CustomField["type"]; label: string; icon: React.Re
 export function getFieldTypeIcon(type: CustomField["type"]) {
   switch (type) {
     case "text":
-      return <Type className="w-[14px] h-[14px] text-[#554e46] shrink-0" />;
+      return <Type className="w-[14px] h-[14px] text-[var(--color-text)] shrink-0" />;
     case "number":
-      return <Hash className="w-[14px] h-[14px] text-[#554e46] shrink-0" />;
+      return <Hash className="w-[14px] h-[14px] text-[var(--color-text)] shrink-0" />;
     case "date":
-      return <CalendarDays className="w-[14px] h-[14px] text-[#554e46] shrink-0" />;
+      return <CalendarDays className="w-[14px] h-[14px] text-[var(--color-text)] shrink-0" />;
     case "checkbox":
-      return <CheckSquare className="w-[14px] h-[14px] text-[#554e46] shrink-0" />;
+      return <CheckSquare className="w-[14px] h-[14px] text-[var(--color-text)] shrink-0" />;
   }
 }
 
@@ -168,23 +168,24 @@ export function EditListViewPanel({
       initial={{ width: 0, opacity: 0 }}
       animate={{ width: 352, opacity: 1 }}
       exit={{ width: 0, opacity: 0 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="bg-[#fefbf7] border-l border-[#d5c8b8] flex flex-col h-full shrink-0 overflow-hidden"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-[var(--color-bg)] border-l border-[#d5c8b8] flex flex-col h-full shrink-0 overflow-hidden"
     >
       <div className="w-[352px] flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center h-16 min-h-[64px] px-4 border-b border-[#d7cfc5] shrink-0">
+        <div className="flex items-center h-16 min-h-[64px] px-4 border-b border-[var(--color-border)] shrink-0">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer"
+              aria-label="Close panel"
+              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
             >
-              <PanelRightClose className="w-4 h-4 text-[#554e46]" />
+              <PanelRightClose className="w-4 h-4 text-[var(--color-text)]" />
             </button>
             <div className="w-2 flex items-center justify-center">
-              <div className="h-[15px] w-px bg-[#d7cfc5]" />
+              <div className="h-[15px] w-px bg-[var(--color-border)]" />
             </div>
-            <span className="text-sm font-medium text-[#554e46]">
+            <span className="text-sm font-medium text-[var(--color-text)]">
               Editing List View
             </span>
           </div>
@@ -194,7 +195,7 @@ export function EditListViewPanel({
         <div className="flex-1 overflow-y-auto flex flex-col gap-5 px-3 py-6">
           {/* Density */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-[#554e46]">
+            <span className="text-sm font-medium text-[var(--color-text)]">
               Row Density
             </span>
             <MLTab
@@ -224,7 +225,7 @@ export function EditListViewPanel({
           {/* Columns header */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-[#554e46]">
+              <span className="text-sm font-medium text-[var(--color-text)]">
                 Columns
               </span>
               <p className="text-xs text-[#998d7d]">
@@ -279,10 +280,10 @@ export function EditListViewPanel({
             </SortableContext>
             <DragOverlay dropAnimation={null}>
               {activeDragColumn ? (
-                <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-[#f4f1ed] border border-[#d5c8b8] shadow-lg">
+                <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-[var(--color-surface)] border border-[#d5c8b8] shadow-lg">
                   <GripVertical className="w-4 h-4 text-[#998d7d] shrink-0" />
                   {activeDragColumn.icon}
-                  <span className="flex-1 text-xs font-medium text-[#554e46]">
+                  <span className="flex-1 text-xs font-medium text-[var(--color-text)]">
                     {activeDragColumn.label}
                   </span>
                 </div>
@@ -321,8 +322,8 @@ export function EditListViewPanel({
                           onClick={() => setNewFieldType(opt.id)}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-[0.5px] text-xs font-medium transition-colors cursor-pointer shrink-0 ${
                             newFieldType === opt.id
-                              ? "bg-[#554e46] text-white border-[#554e46]"
-                              : "bg-white border-[rgba(0,0,0,0.16)] text-[#554e46] hover:bg-[#f4f1ed]"
+                              ? "bg-[var(--color-text)] text-white border-[var(--color-text)]"
+                              : "bg-white border-[rgba(0,0,0,0.16)] text-[var(--color-text)] hover:bg-[var(--color-surface)]"
                           }`}
                         >
                           {opt.icon}
@@ -360,7 +361,7 @@ export function EditListViewPanel({
           {!addingField && (
             <button
               onClick={() => setAddingField(true)}
-              className="flex items-center gap-2 px-2 py-2 rounded-lg border-[0.5px] border-dashed border-[rgba(0,0,0,0.16)] text-xs font-medium text-[#998d7d] hover:text-[#554e46] hover:border-[rgba(0,0,0,0.3)] hover:bg-black/[0.02] transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-2 py-2 rounded-lg border-[0.5px] border-dashed border-[rgba(0,0,0,0.16)] text-xs font-medium text-[#998d7d] hover:text-[var(--color-text)] hover:border-[rgba(0,0,0,0.3)] hover:bg-black/[0.02] transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Add Custom Field
@@ -370,7 +371,7 @@ export function EditListViewPanel({
 
         {/* Save as View */}
         {onSaveAsView && (
-          <div className="shrink-0 border-t border-[#d7cfc5] px-3 py-3">
+          <div className="shrink-0 border-t border-[var(--color-border)] px-3 py-3">
             <AnimatePresence mode="wait">
               {savedToast ? (
                 <motion.div
@@ -409,7 +410,7 @@ export function EditListViewPanel({
                       }
                     }}
                     placeholder="View name"
-                    className="w-full text-xs font-medium text-[#554e46] bg-white border border-[#d5c8b8] rounded-lg px-2.5 py-2 outline-none focus:border-[#554e46] focus:ring-1 focus:ring-[#554e46]/20"
+                    className="w-full text-xs font-medium text-[var(--color-text)] bg-white border border-[#d5c8b8] rounded-lg px-2.5 py-2 outline-none focus:border-[var(--color-text)] focus:ring-1 focus:ring-[var(--color-text)]/20"
                     autoFocus
                   />
                   <div className="flex items-center gap-1">
@@ -446,7 +447,7 @@ export function EditListViewPanel({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setSavingView(true)}
-                  className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white text-xs font-medium text-[#554e46] hover:bg-[#f4f1ed] transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg border-[0.5px] border-[rgba(0,0,0,0.16)] bg-white text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors cursor-pointer"
                 >
                   <Bookmark className="w-3.5 h-3.5" />
                   Save as View
@@ -545,7 +546,7 @@ function SortableColumnItem({
             }
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="flex-1 min-w-0 text-xs font-medium text-[#554e46] bg-white border border-[#d5c8b8] rounded px-1.5 py-0.5 outline-none focus:border-[#554e46] focus:ring-1 focus:ring-[#554e46]/20"
+          className="flex-1 min-w-0 text-xs font-medium text-[var(--color-text)] bg-white border border-[#d5c8b8] rounded px-1.5 py-0.5 outline-none focus:border-[var(--color-text)] focus:ring-1 focus:ring-[var(--color-text)]/20"
         />
       ) : (
         <span
@@ -554,12 +555,12 @@ function SortableColumnItem({
             setEditing(true);
           }}
           className={`flex-1 text-xs font-medium select-none ${
-            isHidden ? "text-[#998d7d]" : "text-[#554e46]"
+            isHidden ? "text-[#998d7d]" : "text-[var(--color-text)]"
           }`}
         >
           {column.label}
           {isCustom && (
-            <span className="ml-1 text-[10px] text-[#ac9b85] font-normal">
+            <span className="ml-1 text-[10px] text-[var(--color-text-secondary)] font-normal">
               custom
             </span>
           )}
@@ -572,7 +573,8 @@ function SortableColumnItem({
             setEditing(true);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-1 rounded hover:bg-black/5 transition-colors cursor-pointer opacity-0 group-hover/col:opacity-100"
+          aria-label="Rename column"
+          className="p-1 rounded hover:bg-black/5 transition-colors cursor-pointer opacity-0 group-hover/col:opacity-100 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
         >
           <Pencil className="w-3 h-3 text-[#998d7d]" />
         </button>
@@ -581,7 +583,8 @@ function SortableColumnItem({
         <button
           onClick={onRemove}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-1 rounded hover:bg-red-50 transition-colors cursor-pointer opacity-0 group-hover/col:opacity-100"
+          aria-label="Remove column"
+          className="p-1 rounded hover:bg-red-50 transition-colors cursor-pointer opacity-0 group-hover/col:opacity-100 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
         >
           <Trash2 className="w-3.5 h-3.5 text-red-400" />
         </button>
@@ -589,12 +592,13 @@ function SortableColumnItem({
       <button
         onClick={onToggle}
         onPointerDown={(e) => e.stopPropagation()}
-        className="p-1 rounded hover:bg-black/5 transition-colors cursor-pointer"
+        aria-label={isHidden ? "Show column" : "Hide column"}
+        className="p-1 rounded hover:bg-black/5 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
       >
         {isHidden ? (
           <EyeOff className="w-4 h-4 text-[#998d7d]" />
         ) : (
-          <Eye className="w-4 h-4 text-[#554e46]" />
+          <Eye className="w-4 h-4 text-[var(--color-text)]" />
         )}
       </button>
     </div>

@@ -62,10 +62,10 @@ export function AppSidebar({
         </div>
         <div className="flex items-center gap-2">
           <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-cream-100 transition-colors cursor-pointer">
-            <Search className="w-4 h-4 text-[#554e46]" />
+            <Search className="w-4 h-4 text-[var(--color-text)]" />
           </button>
           <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-cream-100 transition-colors cursor-pointer">
-            <CirclePlus className="w-4 h-4 text-[#554e46]" />
+            <CirclePlus className="w-4 h-4 text-[var(--color-text)]" />
           </button>
         </div>
       </div>
@@ -142,13 +142,13 @@ export function AppSidebar({
                 onClick={() => setRecentlyViewedOpen((v) => !v)}
                 className="flex items-center justify-between w-full h-8 px-2 rounded-lg opacity-70 cursor-pointer"
               >
-                <span className="text-xs font-medium text-[#554e46]">
+                <span className="text-xs font-medium text-[var(--color-text)]">
                   Recently Viewed
                 </span>
                 {recentlyViewedOpen ? (
-                  <ChevronDown className="w-4 h-4 text-[#554e46]" />
+                  <ChevronDown className="w-4 h-4 text-[var(--color-text)]" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-[#554e46]" />
+                  <ChevronRight className="w-4 h-4 text-[var(--color-text)]" />
                 )}
               </button>
               {recentlyViewedOpen && (
@@ -250,10 +250,10 @@ function CollapsedSidebar({
       {/* Search + Add */}
       <div className="flex flex-col items-center gap-2 py-1.5">
         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-cream-100 transition-colors cursor-pointer">
-          <Search className="w-4 h-4 text-[#554e46]" />
+          <Search className="w-4 h-4 text-[var(--color-text)]" />
         </button>
         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-cream-100 transition-colors cursor-pointer">
-          <CirclePlus className="w-4 h-4 text-[#554e46]" />
+          <CirclePlus className="w-4 h-4 text-[var(--color-text)]" />
         </button>
       </div>
 
@@ -267,28 +267,28 @@ function CollapsedSidebar({
         <button
           onClick={() => onNavigate("dashboard")}
           className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
-            currentPage === "dashboard" ? "bg-[#f4f1ed]" : "hover:bg-cream-100"
+            currentPage === "dashboard" ? "bg-[var(--color-surface)]" : "hover:bg-cream-100"
           }`}
         >
-          <LayoutDashboard className="w-4 h-4 text-[#554e46]" />
+          <LayoutDashboard className="w-4 h-4 text-[var(--color-text)]" />
         </button>
         <button
           onClick={() => onNavigate("projects")}
           className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
-            currentPage === "projects" ? "bg-[#f4f1ed]" : "hover:bg-cream-100"
+            currentPage === "projects" ? "bg-[var(--color-surface)]" : "hover:bg-cream-100"
           }`}
         >
-          <FolderKanban className="w-4 h-4 text-[#554e46]" />
+          <FolderKanban className="w-4 h-4 text-[var(--color-text)]" />
         </button>
         <button
           onClick={() => onNavigate("storefronts")}
           className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
             currentPage === "storefronts"
-              ? "bg-[#f4f1ed]"
+              ? "bg-[var(--color-surface)]"
               : "hover:bg-cream-100"
           }`}
         >
-          <User className="w-4 h-4 text-[#554e46]" />
+          <User className="w-4 h-4 text-[var(--color-text)]" />
         </button>
       </div>
 
@@ -298,18 +298,18 @@ function CollapsedSidebar({
       {/* Footer icons */}
       <div className="flex flex-col items-center gap-2 p-2 pb-4">
         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-cream-100 transition-colors cursor-pointer">
-            <GraduationCap className="w-4 h-4 text-[#554e46]" />
+            <GraduationCap className="w-4 h-4 text-[var(--color-text)]" />
         </button>
         <button
           onClick={() => router.push("/settings/general")}
           className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
-            isSettings ? "bg-[#f4f1ed]" : "hover:bg-cream-100"
+            isSettings ? "bg-[var(--color-surface)]" : "hover:bg-cream-100"
           }`}
         >
-          <Settings className="w-4 h-4 text-[#554e46]" />
+          <Settings className="w-4 h-4 text-[var(--color-text)]" />
         </button>
         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-cream-100 transition-colors cursor-pointer">
-          <LayoutGrid className="w-4 h-4 text-[#554e46]" />
+          <LayoutGrid className="w-4 h-4 text-[var(--color-text)]" />
         </button>
       </div>
     </div>

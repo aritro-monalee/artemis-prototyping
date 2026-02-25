@@ -1,8 +1,18 @@
 @import "tailwindcss";
 @import "./lib/monalee-ui/global.css";
 
-/* Override sidebar accent colors to match Figma (cream/neutral, not purple) */
 :root {
+  --color-bg: #fefbf7;
+  --color-text: #554e46;
+  --color-text-muted: #7b6f60;
+  --color-text-secondary: #ac9b85;
+  --color-border: #d7cfc5;
+  --color-border-alt: #e3e0dd;
+  --color-surface: #f4f1ed;
+  --color-brand: #6e04bd;
+  --color-brand-hover: #5c03a0;
+  --color-brand-light: #c44dff;
+
   --color-sidebar-accent: var(--color-cream-100);
   --color-sidebar-accent-foreground: var(--color-cream-950);
 }
@@ -14,7 +24,7 @@
 
 /* React Flow overrides for PipelineEditor */
 .react-flow__connection-line {
-  stroke: #6e04bd;
+  stroke: var(--color-brand);
   stroke-width: 1.5;
 }
 .react-flow__handle {
@@ -26,7 +36,7 @@
   transform: scale(1.4);
 }
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: #c44dff;
+  stroke: var(--color-brand-light);
   stroke-width: 2.5;
 }
 .react-flow__node.selected,

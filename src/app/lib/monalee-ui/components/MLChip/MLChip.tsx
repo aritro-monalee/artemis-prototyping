@@ -90,7 +90,7 @@ export const MLChip = forwardRef<HTMLDivElement, MLChipProps>(
       <div
         ref={ref}
         className={cn(
-          'inline-flex items-center rounded-md',
+          'inline-flex items-center rounded-md leading-none',
           outerColorClasses[color],
           sizeClasses[size],
           // Entry animation when dynamically added
@@ -100,7 +100,7 @@ export const MLChip = forwardRef<HTMLDivElement, MLChipProps>(
         )}
         {...props}
       >
-        <MLText as="span" className={cn('label font-medium px-1', textColorClasses[color])}>
+        <MLText as="span" className={cn('label font-medium px-1 leading-none', textColorClasses[color])}>
           {label}
         </MLText>
         {value !== undefined && value !== null && (

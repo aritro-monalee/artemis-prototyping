@@ -199,7 +199,7 @@ export const MLMultiSelect: FunctionComponent<MLMultiSelectProps> = ({
         >
           <div className="flex-1 flex items-center overflow-hidden min-w-0">
             {selectedOptions.length > 0 ? (
-              <div className="flex flex-wrap gap-1 overflow-hidden max-w-full -my-0.5">
+              <div className="flex flex-wrap gap-1 overflow-hidden max-w-full items-center">
                 {selectedOptions.map((option) => (
                   <div key={option.value} className="shrink-0">
                     <MLChip

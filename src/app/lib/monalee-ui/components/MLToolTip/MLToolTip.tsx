@@ -1,7 +1,6 @@
 import React from 'react';
 import DOMPurify from 'isomorphic-dompurify';
-import { faExclamationCircle } from '@fortawesome/pro-regular-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CircleAlert } from 'lucide-react';
 
 import { cn } from '../../utils/cn';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
@@ -50,10 +49,7 @@ export const MLToolTip: React.FC<MLToolTipProps> = (props) => {
             type="button"
             className={cn('w-[14px] h-[14px] relative z-50 ml-2 flex-none', className)}
           >
-            <FontAwesomeIcon
-              className="absolute inset-0 z-0 h-full! w-full"
-              icon={faExclamationCircle}
-            />
+            <CircleAlert className="absolute inset-0 z-0 h-full w-full" />
           </button>
         )}
       </TooltipTrigger>

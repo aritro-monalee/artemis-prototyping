@@ -1,6 +1,5 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMinus, faPlus } from '@fortawesome/pro-solid-svg-icons';
+import { Minus as MinusIcon, Plus as PlusIcon } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export interface MLCounterProps {
@@ -185,7 +184,7 @@ export const MLCounter = forwardRef<HTMLDivElement, MLCounterProps>(
           onClick={onMinusClick}
           aria-label="Decrease value"
         >
-          <FontAwesomeIcon icon={faMinus} className="size-3 text-base-foreground" />
+          <MinusIcon className="size-3 text-base-foreground" />
         </button>
 
         {/* Left border separator */}
@@ -232,7 +231,7 @@ export const MLCounter = forwardRef<HTMLDivElement, MLCounterProps>(
           onClick={onPlusClick}
           aria-label="Increase value"
         >
-          <FontAwesomeIcon icon={faPlus} className="size-3 text-base-foreground" />
+          <PlusIcon className="size-3 text-base-foreground" />
         </button>
       </div>
     );

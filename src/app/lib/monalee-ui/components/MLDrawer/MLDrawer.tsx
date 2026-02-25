@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Drawer as DrawerPrimitive } from 'vaul';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClose } from '@fortawesome/pro-regular-svg-icons';
+import { X as CloseIcon } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { MLText } from '../MLText';
 
@@ -71,7 +70,7 @@ function MLDrawerContent({
         {children}
         {showClose && (
           <DrawerPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-            <FontAwesomeIcon icon={faClose} className="size-4" />
+            <CloseIcon className="size-4" />
             <MLText as="span" className="sr-only">
               Close
             </MLText>

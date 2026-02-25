@@ -18,8 +18,7 @@ import {
   CommandItem,
   CommandList,
 } from '../ui';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faChevronDown } from '@fortawesome/pro-regular-svg-icons';
+import { Check as CheckIcon, ChevronDown as ChevronDownIcon } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { MLToolTip } from '../MLToolTip/MLToolTip';
 import { MLText } from '../MLText';
@@ -372,8 +371,7 @@ const CountrySelect = ({
           disabled={disabled}
         >
           <FlagComponent country={selectedCountry} countryName={selectedCountry} />
-          <FontAwesomeIcon
-            icon={faChevronDown}
+          <ChevronDownIcon
             className={cn('-mr-2 size-4 opacity-50 transition-transform', {
               'rotate-180': isOpen,
               hidden: !!disabled,
@@ -454,8 +452,7 @@ const CountrySelectOption = ({
         as="span"
         className="text-sm text-foreground/50"
       >{`+${RPNInput.getCountryCallingCode(country)}`}</MLText>
-      <FontAwesomeIcon
-        icon={faCheck}
+      <CheckIcon
         className={`ml-auto size-4 ${country === selectedCountry ? 'opacity-100' : 'opacity-0'}`}
       />
     </CommandItem>

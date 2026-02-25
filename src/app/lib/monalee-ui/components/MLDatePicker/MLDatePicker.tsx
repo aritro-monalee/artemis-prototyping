@@ -61,6 +61,14 @@ export interface DatePickerProps {
    * Whether the date picker is disabled
    */
   disabled?: boolean;
+  /**
+   * Which side to open the popover on
+   */
+  popoverSide?: 'top' | 'right' | 'bottom' | 'left';
+  /**
+   * Alignment of the popover along the trigger edge
+   */
+  popoverAlign?: 'start' | 'center' | 'end';
 }
 
 export interface DatePickerWithPresetsProps {
@@ -159,6 +167,8 @@ function DatePicker({
   placeholder = 'Pick a date',
   className,
   disabled,
+  popoverSide,
+  popoverAlign,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(value);
@@ -195,9 +205,11 @@ function DatePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0 border-base-border shadow-md bg-base-popover"
-          align="start"
+          className="w-auto p-0 border-base-border shadow-md bg-base-popover overflow-hidden duration-200"
+          side={popoverSide}
+          align={popoverAlign ?? 'start'}
           sideOffset={4}
+          collisionPadding={12}
         >
           <Calendar
             mode="single"

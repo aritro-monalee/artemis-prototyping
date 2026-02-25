@@ -418,16 +418,16 @@ export const MLTable: React.FC<MLTableProps> = ({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="relative w-full overflow-visible border border-base-border rounded-md shadow-xs">
+      <div className="relative w-full overflow-visible border border-base-border rounded-md bg-white shadow-xs">
         <table
-          className={cn('w-full caption-bottom border-collapse', currentSize.table, className)}
+          className={cn('w-full caption-bottom border-separate border-spacing-0', currentSize.table, className)}
           {...rest}
         >
           {/* Header */}
           <thead
             className={cn(
               stickyHeader && 'sticky top-0 z-10',
-              'bg-base-background',
+              'bg-white',
               headerClassName
             )}
           >
@@ -475,7 +475,7 @@ export const MLTable: React.FC<MLTableProps> = ({
           </thead>
 
           {/* Body */}
-          <tbody className={cn('divide-y divide-base-border', bodyClassName)}>
+          <tbody className={cn(bodyClassName)}>
             {renderTableBody()}
           </tbody>
         </table>

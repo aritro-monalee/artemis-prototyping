@@ -53,6 +53,13 @@ const CHECKLIST_ORDER_KEY = "artemis-checklist-order";
 
 // ── Per-project extra data ──
 
+export interface UploadedDocument {
+  fileName: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  kind: "document" | "photo";
+}
+
 interface ProjectExtraData {
   notes: Note[];
   designComments: DesignComment[];
@@ -63,6 +70,7 @@ interface ProjectExtraData {
   activities: ActivityItem[];
   projectType: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
   stageHistory: StageHistoryEntry[];
+  uploadedDocuments: UploadedDocument[];
 }
 
 function defaultProjectExtra(): ProjectExtraData {
@@ -76,6 +84,7 @@ function defaultProjectExtra(): ProjectExtraData {
     activities: structuredClone(initialActivities),
     projectType: "Solar",
     stageHistory: [],
+    uploadedDocuments: [],
   };
 }
 
@@ -215,6 +224,7 @@ interface ProjectStoreValue {
   checklistPostsaleOrder: string[];
   setChecklistPostsaleOrder: Dispatch<SetStateAction<string[]>>;
   getChecklist: (projectId: string) => ChecklistSection[];
+  getIncompleteChecklistItems: (projectId: string, stageId: string) => string[];
   toggleChecklistItem: (projectId: string, stageId: string, itemIdx: number) => void;
   getPlacedLabels: (projectId: string) => PlacedLabel[];
   setPlacedLabelsForProject: (projectId: string, labels: PlacedLabel[]) => void;
@@ -226,6 +236,8 @@ interface ProjectStoreValue {
   getActivities: (projectId: string) => ActivityItem[];
   getProjectType: (projectId: string) => "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
   setProjectType: (projectId: string, type: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement") => void;
+  getUploadedDocuments: (projectId: string) => UploadedDocument[];
+  addUploadedDocuments: (projectId: string, docs: UploadedDocument[]) => void;
 }
 
 const ProjectStoreContext = createContext<ProjectStoreValue | null>(null);
@@ -812,6 +824,18 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
     [getExtra, stages, checklistTemplate, checklistPresaleOrder, checklistPostsaleOrder]
   );
 
+  const getIncompleteChecklistItems = useCallback(
+    (pid: string, stageId: string): string[] => {
+      const templateItems = checklistTemplate[stageId];
+      if (!templateItems || templateItems.length === 0) return [];
+      const doneArr = getExtra(pid).checklistDone[stageId] || [];
+      return templateItems
+        .filter((t, i) => !t.optional && !(doneArr[i] ?? false))
+        .map((t) => t.label);
+    },
+    [checklistTemplate, getExtra]
+  );
+
   const toggleChecklistItem = useCallback(
     (pid: string, stageId: string, itemIdx: number) =>
       setExtra(pid, (e) => {
@@ -868,6 +892,16 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
     [setExtra]
   );
 
+  const getUploadedDocuments = useCallback(
+    (pid: string) => getExtra(pid).uploadedDocuments ?? [],
+    [getExtra]
+  );
+  const addUploadedDocuments = useCallback(
+    (pid: string, docs: UploadedDocument[]) =>
+      setExtra(pid, (e) => ({ ...e, uploadedDocuments: [...(e.uploadedDocuments ?? []), ...docs] })),
+    [setExtra]
+  );
+
   // ── Assemble value ──
 
   const value = useMemo<ProjectStoreValue>(
@@ -891,12 +925,13 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
       checklistTemplate, setChecklistTemplate,
       checklistPresaleOrder, setChecklistPresaleOrder,
       checklistPostsaleOrder, setChecklistPostsaleOrder,
-      getChecklist, toggleChecklistItem,
+      getChecklist, getIncompleteChecklistItems, toggleChecklistItem,
       getPlacedLabels, setPlacedLabelsForProject, updatePlacedLabels,
       getLabelVisibility, setLabelVisibility,
       getPanelCount, setPanelCount,
       getActivities,
       getProjectType, setProjectType,
+      getUploadedDocuments, addUploadedDocuments,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [projects, stages, allStages, filterOptions, recentProjects, settings, projectData, pipelineEdges, checklistTemplate, checklistOrderState]

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Plus, Check, ArrowUp, SquarePen, Trash2 } from "lucide-react";
 import type { ProjectCardData, ProjectDetailData } from "@/app/data/projects";
 import { getProjectDetail } from "@/app/data/projects";
@@ -90,32 +91,10 @@ export function ProjectCard({
   }
 
   const sidebarDetail = sidebarOpen ? getProjectDetail(project.id) : null;
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
-
-  const updatePopoverPos = useCallback(() => {
-    if (!cardRef.current || !sidebarOpen) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setPopoverPos({ top: rect.top, left: rect.right + 8 });
-  }, [sidebarOpen]);
-
-  useEffect(() => {
-    if (!sidebarOpen) { setPopoverPos(null); return; }
-    updatePopoverPos();
-    window.addEventListener("scroll", updatePopoverPos, true);
-    window.addEventListener("resize", updatePopoverPos);
-    return () => {
-      window.removeEventListener("scroll", updatePopoverPos, true);
-      window.removeEventListener("resize", updatePopoverPos);
-    };
-  }, [sidebarOpen, updatePopoverPos]);
 
   return (
     <motion.div
-      ref={(node) => {
-        setNodeRef(node);
-        (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}
+      ref={setNodeRef}
       initial={false}
       animate={{
         x: transform?.x ?? 0,
@@ -145,11 +124,10 @@ export function ProjectCard({
         {typeof document !== "undefined" &&
           createPortal(
             <AnimatePresence>
-              {sidebarOpen && sidebarDetail && popoverPos && (
+              {sidebarOpen && sidebarDetail && (
                 <SidebarPopoverContent
                   key={project.id}
                   project={sidebarDetail}
-                  popoverPos={popoverPos}
                 />
               )}
             </AnimatePresence>,
@@ -161,10 +139,8 @@ export function ProjectCard({
 
 function SidebarPopoverContent({
   project,
-  popoverPos,
 }: {
   project: ProjectDetailData;
-  popoverPos: { top: number; left: number };
 }) {
   const [systemOpen, setSystemOpen] = useState(true);
   const [financingOpen, setFinancingOpen] = useState(true);
@@ -176,12 +152,11 @@ function SidebarPopoverContent({
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: -8, scale: 0.98 }}
       transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-      className="fixed z-50 w-[370px] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[12px] overflow-hidden flex flex-col"
+      data-sidebar-popover
+      className="fixed z-50 top-[80px] right-[16px] w-[370px] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[12px] overflow-hidden flex flex-col"
       style={{
-        top: popoverPos.top,
-        left: popoverPos.left,
+        bottom: 16,
         boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)",
-        maxHeight: "calc(100vh - 100px)",
         backgroundImage: "linear-gradient(180deg, #fefbf7 7%, rgba(254,251,247,0) 14%), linear-gradient(90deg, #f4f1ed 0%, #f4f1ed 100%)",
       }}
       onClick={(e) => e.stopPropagation()}
@@ -238,6 +213,7 @@ function CardContent({
   currentStageColor?: string;
   disableDrag?: boolean;
 }) {
+  const router = useRouter();
   const [localSelected, setLocalSelected] = useState(false);
   const selected = externalSelected ?? localSelected;
 
@@ -272,11 +248,11 @@ function CardContent({
 
   return (
       <div
-        className={`relative h-[168px] flex flex-col bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] group/card ${disableDrag ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+        className={`relative h-[158px] flex flex-col bg-[var(--color-bg)] rounded-[8px] ${popoverOpen ? "" : "overflow-clip"} group/card ${disableDrag ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
         style={{
           boxShadow: selected
-            ? "0 0 0 1px white, 0 0 0 2px #6e04bd, 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)"
-            : "0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)",
+            ? "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0 0 0 1px white, 0 0 0 2px #6e04bd, 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)"
+            : "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)",
         }}
       >
         {popoverOpen && (
@@ -325,7 +301,7 @@ function CardContent({
                 {project.panels} Panels, {project.batteries} Battery
               </span>
             </div>
-            <div className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.04)] p-[4px] rounded-[6px] shrink-0 flex items-center justify-center overflow-clip">
+            <div className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.04)] px-[4px] py-[1px] rounded-[4px] shrink-0 flex items-center justify-center">
               <span className="font-normal text-[var(--color-text)] text-xs leading-none">
                 {project.daysInStage} Days
               </span>
@@ -333,38 +309,35 @@ function CardContent({
           </div>
         </div>
 
-        {/* Main — flex-1 fills remaining space, justify-between spreads text vertically */}
+        {/* Main — flex-1 auto-adjusts: 118px when footer hidden, 82px when footer visible */}
         <div
-          className={`flex-1 flex items-start gap-[10px] p-[12px] min-h-0 ${
+          className={`flex-1 flex flex-col justify-between p-[12px] min-h-0 shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] ${
             popoverOpen
               ? "cursor-default"
               : "cursor-pointer hover:bg-black/[0.02]"
           }`}
           onClick={(e) => {
             e.stopPropagation();
-            if (!popoverOpen) onOpen(project.id);
+            if (!popoverOpen) router.push(`/project/${project.id}`);
           }}
         >
-          <div className="relative w-[36px] h-[36px] shrink-0">
-            <div className="w-full h-full rounded-[4px] border-[0.5px] border-[rgba(0,0,0,0.04)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] bg-[#d4c9b8] overflow-hidden">
+          <div className="flex gap-[12px] items-start">
+            <div className="w-[36px] h-[36px] shrink-0 rounded-[4px] border-[0.5px] border-[rgba(0,0,0,0.04)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] bg-[#d4c9b8] overflow-hidden">
               <div className="w-full h-full bg-gradient-to-br from-[#c5b89a] to-[#8a7d6b]" />
             </div>
-            <div className="absolute -bottom-[2px] -right-[2px] w-[10px] h-[10px] rounded-full bg-[var(--color-brand)] border-[1.5px] border-[var(--color-bg)]" />
-          </div>
-          <div className="flex-1 flex flex-col justify-between self-stretch min-w-0 leading-none">
-            <div className="flex flex-col gap-[6px]">
-              <p className="font-normal text-[var(--color-text)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
+            <div className="flex-1 flex flex-col gap-[6px] min-w-0 leading-none text-sm whitespace-nowrap">
+              <p className="font-normal text-[var(--color-text)] overflow-x-clip overflow-y-visible text-ellipsis w-full">
                 {project.address}
               </p>
-              <p className="font-normal text-[var(--color-text-muted)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
+              <p className="font-normal text-[var(--color-text-muted)] overflow-x-clip overflow-y-visible text-ellipsis w-full">
                 {project.ownerName}
               </p>
             </div>
-            <div className="flex items-center gap-[12px] text-xs text-[rgba(85,78,70,0.7)] group-hover/card:text-[rgba(85,78,70,0.4)] transition-colors duration-200">
-              <span className="shrink-0">{project.assignee}</span>
-              <span className="shrink-0">{project.date.replace(`, ${new Date().getFullYear()}`, "")}</span>
-              <span className="shrink-0 truncate">{project.department}</span>
-            </div>
+          </div>
+          <div className="flex items-center gap-[12px] text-xs leading-none text-[rgba(85,78,70,0.7)] group-hover/card:text-[rgba(85,78,70,0.4)] transition-colors duration-200">
+            <span className="shrink-0">{project.assignee}</span>
+            <span className="shrink-0">{project.date.replace(`, ${new Date().getFullYear()}`, "")}</span>
+            <span className="shrink-0 truncate">{project.department}</span>
           </div>
         </div>
 
@@ -379,59 +352,53 @@ function CardContent({
         )}
 
         {/* Footer — CSS grid for smooth height animation */}
-        <div className={`relative grid transition-[grid-template-rows] duration-200 ease-out ${
+        <div className={`relative shrink-0 grid transition-[grid-template-rows] duration-200 ease-out ${
           project.tags.length > 0 || popoverOpen
             ? "grid-rows-[1fr]"
             : "grid-rows-[0fr] group-hover/card:grid-rows-[1fr]"
         }`}>
           <div className="overflow-hidden min-h-0">
-            <div className="border-t-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(0,0,0,0.02)]">
-              <div
-                className={`${
-                  tagStep
-                    ? "opacity-0 pointer-events-none"
-                    : "opacity-100"
-                }`}
-              >
-                <div className="flex items-center gap-[5px] px-[12px] py-[6px] flex-wrap min-h-[36px]">
-                  {project.tags.map((tag, index) => (
-                    <div key={project.id + tag.type + index} className="relative">
-                      {tagMenuIndex !== index ? (
-                        <motion.div
-                          layoutId={isDragOverlay ? undefined : `${project.id}-tag-${index}`}
-                          transition={TAG_LAYOUT_TRANSITION}
+            <div className="border-t-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(0,0,0,0.04)]">
+              <div className={`flex items-center gap-[5px] px-[12px] py-[8px] overflow-clip ${
+                tagStep ? "opacity-0 pointer-events-none" : "opacity-100"
+              }`}>
+                {project.tags.map((tag, index) => (
+                  <div key={project.id + tag.type + index} className="relative shrink-0">
+                    {tagMenuIndex !== index ? (
+                      <motion.div
+                        layoutId={isDragOverlay ? undefined : `${project.id}-tag-${index}`}
+                        transition={TAG_LAYOUT_TRANSITION}
+                      >
+                        <div
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTagMenuIndex(
+                              tagMenuIndex === index ? null : index
+                            );
+                          }}
                         >
-                          <button
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTagMenuIndex(
-                                tagMenuIndex === index ? null : index
-                              );
-                            }}
-                          >
-                            <Tag type={tag.type} reason={tag.reason} />
-                          </button>
-                        </motion.div>
-                      ) : (
-                        <div style={{ visibility: "hidden" }}>
                           <Tag type={tag.type} reason={tag.reason} />
                         </div>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    className="flex items-center gap-[2px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-muted)] transition-colors cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openTagPicker();
-                    }}
-                  >
-                    <Plus className="w-[16px] h-[16px]" />
-                    {project.tags.length === 0 && (
-                      <span className="font-medium text-xs leading-none">Add a tag</span>
+                      </motion.div>
+                    ) : (
+                      <div style={{ visibility: "hidden" }}>
+                        <Tag type={tag.type} reason={tag.reason} />
+                      </div>
                     )}
-                  </button>
+                  </div>
+                ))}
+                <div
+                  className="flex items-center gap-[2px] shrink-0 text-[#ac9b85] hover:text-[var(--color-text-muted)] transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openTagPicker();
+                  }}
+                >
+                  <Plus className="w-[16px] h-[16px]" />
+                  {project.tags.length === 0 && (
+                    <span className="font-medium text-xs leading-none">Add a tag</span>
+                  )}
                 </div>
               </div>
             </div>

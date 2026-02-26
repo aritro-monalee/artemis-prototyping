@@ -10,12 +10,10 @@ export const TAG_LAYOUT_TRANSITION_SETTINGS = {
   layout: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] as const },
 };
 
-/** CRM provider logo URLs */
+/** CRM provider logo URLs (local assets — immune to CDN token expiry) */
 export const PROVIDER_LOGOS: Record<CRMProvider, string> = {
-  salesforce:
-    "https://cdn.brandfetch.io/idVE84WdIN/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1668516062674",
-  pipedrive:
-    "https://cdn.brandfetch.io/idZG_U1qqs/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1667601678560",
+  salesforce: "/icons/crm/salesforce.svg",
+  pipedrive: "/icons/crm/pipedrive.png",
 };
 
 /** Step animation variants for multi-step modals */

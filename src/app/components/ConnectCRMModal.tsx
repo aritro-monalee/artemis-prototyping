@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+
 import { ArrowRight, Check, Loader2, Download, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MLButton, MLInput, MLSelect, MLMultiSelect } from "@/app/lib/monalee-ui";
@@ -353,7 +353,7 @@ export function ConnectCRMModal({ onClose, onConnect, editingConnection }: Conne
                           : "border-base-border hover:border-base-primary/40 bg-white"
                       }`}
                     >
-                      <Image
+                      <img
                         src={PROVIDER_LOGOS[key as CRMProvider]}
                         alt={info.name}
                         width={32}

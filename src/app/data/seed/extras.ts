@@ -19,6 +19,18 @@ export const NOTE_SOURCE_META: Record<NoteSource, { bg: string; border: string; 
   Jira:              { bg: "bg-blue-50",    border: "border-blue-300",    text: "text-blue-700" },
 };
 
+const BF_C = "1bxid64Mup7aczewSAYMX";
+
+export const NOTE_SOURCE_LOGO: Record<NoteSource, { logo: string; brandColor: string }> = {
+  Salesforce:        { logo: `https://cdn.brandfetch.io/salesforce.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`, brandColor: "#00A1E0" },
+  HubSpot:           { logo: `https://cdn.brandfetch.io/hubspot.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`,    brandColor: "#FF7A59" },
+  Slack:             { logo: `https://cdn.brandfetch.io/slack.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`,      brandColor: "#4A154B" },
+  Zendesk:           { logo: `https://cdn.brandfetch.io/zendesk.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`,    brandColor: "#03363D" },
+  Intercom:          { logo: `https://cdn.brandfetch.io/intercom.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`,   brandColor: "#286EFA" },
+  "Google Calendar": { logo: `https://cdn.brandfetch.io/google.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`,     brandColor: "#4285F4" },
+  Jira:              { logo: `https://cdn.brandfetch.io/atlassian.com/w/128/h/128/theme/dark/icon.svg?c=${BF_C}`,   brandColor: "#0052CC" },
+};
+
 export const initialNotes: Note[] = [
   {
     id: 1,

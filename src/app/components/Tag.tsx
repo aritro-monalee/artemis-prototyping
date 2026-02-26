@@ -57,7 +57,7 @@ export function Tag({ type, reason }: TagProps) {
   return (
     <div
       className={cn(
-        "px-2 py-1 rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center gap-1 overflow-hidden border",
+        "px-2 py-[3px] rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center gap-1 overflow-hidden border",
         styles?.bg,
         styles?.border,
       )}

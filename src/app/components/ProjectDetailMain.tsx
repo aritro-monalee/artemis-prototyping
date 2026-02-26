@@ -222,8 +222,11 @@ export function ProjectDetailMain({ project, activeTab, onEditDesign }: ProjectD
         {/* Payment Options */}
         <PaymentOptionsSection />
 
-        {/* Upload Documents */}
-        <UploadDocumentsSection />
+        {/* Documents */}
+        <DocumentsSection projectId={project.id} />
+
+        {/* Site Photos */}
+        <SitePhotosSection projectId={project.id} />
 
         {/* Contract & Legal */}
         <ContractLegalSection />
@@ -456,36 +459,144 @@ function PaymentOptionsSection() {
   );
 }
 
-/* ─── Upload Documents ─── */
-function UploadDocumentsSection() {
+/* ─── Documents ─── */
+
+const STATIC_DOCUMENTS = [
+  { fileName: "utility-bill.pdf", history: "Uploaded by Alex Patin on 06/10/2025 at 2:12 pm" },
+  { fileName: "photo-id.jpg", history: "Uploaded by Alex Patin on 06/10/2025 at 2:13 pm" },
+];
+
+function DocumentsSection({ projectId }: { projectId: string }) {
+  const { getUploadedDocuments } = useProjectStore();
+  const uploadedDocs = getUploadedDocuments(projectId).filter((d) => d.kind === "document");
+
+  const allDocs = [
+    ...STATIC_DOCUMENTS,
+    ...uploadedDocs.map((doc) => ({
+      fileName: doc.fileName,
+      history: `Uploaded by ${doc.uploadedBy} on ${doc.uploadedAt}`,
+    })),
+  ];
+
   return (
-    <div className="flex flex-col gap-2 items-start w-full">
+    <div className="flex flex-col gap-4 items-start w-full">
       <div className="flex items-center justify-between h-9 w-full">
-        <h2 className="text-lg font-bold text-[var(--color-text)] leading-7">Upload Documents</h2>
-        <button className="h-9 flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--color-surface)] shadow-xs text-sm font-medium text-[var(--color-text)]">
-          Upload File
+        <h2 className="text-lg font-bold text-[var(--color-text)] leading-7">Documents</h2>
+        <div className="flex items-center gap-2">
+          <button className="h-9 flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--color-surface)] shadow-xs text-sm font-medium text-[var(--color-text)] cursor-pointer hover:bg-[var(--color-surface)]/80 transition-colors">
+            <Download className="w-4 h-4" />
+            Download All
+          </button>
+          <button className="h-9 flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--color-surface)] shadow-xs text-sm font-medium text-[var(--color-text)] cursor-pointer hover:bg-[var(--color-surface)]/80 transition-colors">
+            <Upload className="w-4 h-4" />
+            Upload
+          </button>
+        </div>
+      </div>
+      <div className="border border-[var(--color-border)] rounded-xl bg-white overflow-hidden w-full divide-y divide-[var(--color-border)]">
+        {allDocs.map((doc, idx) => (
+          <div key={idx} className="flex items-center gap-4 px-5 py-3.5 group hover:bg-[var(--color-surface)]/40 transition-colors">
+            <div className="w-9 h-9 rounded-lg bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+              <File className="w-4 h-4 text-[var(--color-text-muted)]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--color-text)] truncate">{doc.fileName}</p>
+              <p className="text-xs text-[var(--color-text-muted)] truncate">{doc.history}</p>
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button className="w-8 h-8 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors cursor-pointer">
+                <Eye className="w-4 h-4" />
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors cursor-pointer">
+                <Download className="w-4 h-4" />
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Site Photos ─── */
+
+const STATIC_PHOTOS = [
+  {
+    fileName: "front-view.jpg",
+    history: "Uploaded by Alex Patin on 06/10/2025 at 2:14 pm",
+    thumb: "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=400&h=300&fit=crop&crop=center",
+  },
+  {
+    fileName: "backyard.jpg",
+    history: "Uploaded by Alex Patin on 06/10/2025 at 2:14 pm",
+    thumb: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=300&fit=crop&crop=center",
+  },
+];
+
+const PHOTO_THUMBS = [
+  "https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=400&h=300&fit=crop&crop=center",
+  "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop&crop=center",
+  "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400&h=300&fit=crop&crop=center",
+  "https://images.unsplash.com/photo-1624397640148-949b1732bb0a?w=400&h=300&fit=crop&crop=center",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop&crop=center",
+  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop&crop=center",
+];
+
+function SitePhotosSection({ projectId }: { projectId: string }) {
+  const { getUploadedDocuments } = useProjectStore();
+  const uploadedPhotos = getUploadedDocuments(projectId).filter((d) => d.kind === "photo");
+
+  const allPhotos = [
+    ...STATIC_PHOTOS,
+    ...uploadedPhotos.map((doc, i) => ({
+      fileName: doc.fileName,
+      history: `Uploaded by ${doc.uploadedBy} on ${doc.uploadedAt}`,
+      thumb: PHOTO_THUMBS[i % PHOTO_THUMBS.length],
+    })),
+  ];
+
+  return (
+    <div className="flex flex-col gap-4 items-start w-full">
+      <div className="flex items-center justify-between h-9 w-full">
+        <h2 className="text-lg font-bold text-[var(--color-text)] leading-7">Site Photos</h2>
+        <button className="h-9 flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--color-surface)] shadow-xs text-sm font-medium text-[var(--color-text)] cursor-pointer hover:bg-[var(--color-surface)]/80 transition-colors">
           <Upload className="w-4 h-4" />
+          Upload Photos
         </button>
       </div>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-[var(--color-border)]">
-            <th className="text-left font-medium text-[var(--color-text-muted)] h-10 px-2">File Name</th>
-            <th className="text-left font-medium text-[var(--color-text-muted)] h-10 px-2">History</th>
-            <th className="h-10 px-2" />
-          </tr>
-        </thead>
-        <tbody>
-          <DocumentRow
-            fileName="test-file.jpg"
-            history="Uploaded by Alex Patin on 06/10/2025 at 2:12 pm"
-          />
-          <DocumentRow
-            fileName="another-test-file.jpg"
-            history="Uploaded by Alex Patin on 06/10/2025 at 2:13 pm"
-          />
-        </tbody>
-      </table>
+      <div className="grid grid-cols-3 xl:grid-cols-4 gap-3 w-full">
+        {allPhotos.map((photo, idx) => (
+          <div key={idx} className="group relative flex flex-col rounded-lg border border-[var(--color-border)] overflow-hidden bg-white">
+            <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-surface)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.thumb}
+                alt={photo.fileName}
+                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-white/90 shadow-sm text-[var(--color-text)] hover:bg-white transition-colors cursor-pointer">
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
+                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-white/90 shadow-sm text-[var(--color-text)] hover:bg-white transition-colors cursor-pointer">
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-white/90 shadow-sm text-[var(--color-text)] hover:text-red-600 hover:bg-white transition-colors cursor-pointer">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+            <div className="px-3 py-2.5 flex flex-col gap-0.5">
+              <p className="text-sm font-medium text-[var(--color-text)] truncate">{photo.fileName}</p>
+              <p className="text-xs text-[var(--color-text-muted)] truncate">{photo.history}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -627,38 +738,6 @@ function PaymentRow({
   );
 }
 
-function DocumentRow({ fileName, history }: { fileName: string; history: string }) {
-  return (
-    <tr className="border-b border-[var(--color-border)]">
-      <td className="h-[52px] px-2">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-md bg-[var(--color-surface)] shrink-0" />
-          <span className="font-medium text-[var(--color-text)] overflow-hidden text-ellipsis whitespace-nowrap">
-            {fileName}
-          </span>
-        </div>
-      </td>
-      <td className="h-[52px] px-2">
-        <span className="text-[var(--color-text)] overflow-hidden text-ellipsis whitespace-nowrap">{history}</span>
-      </td>
-      <td className="h-[52px] px-2">
-        <div className="flex items-center gap-1">
-          <IconToggleButton><Eye className="w-4 h-4" /></IconToggleButton>
-          <IconToggleButton><Download className="w-4 h-4" /></IconToggleButton>
-          <IconToggleButton><Trash2 className="w-4 h-4" /></IconToggleButton>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function IconToggleButton({ children }: { children: React.ReactNode }) {
-  return (
-    <button className="w-9 h-9 flex items-center justify-center rounded-md border border-[var(--color-border-alt)] bg-[var(--color-bg)] shadow-xs text-[var(--color-text)]">
-      {children}
-    </button>
-  );
-}
 
 function DescriptionRow({ label, value }: { label: string; value: string }) {
   return (

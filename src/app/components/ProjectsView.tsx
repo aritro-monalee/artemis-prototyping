@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -33,6 +33,7 @@ import { ListView } from "./ListView";
 import { filterProjects, getStageAtDate } from "@/app/data/projects";
 import type { ProjectCardData, ProjectFilters, CustomField } from "@/app/data/projects";
 import { useProjectStore, type SavedView } from "@/app/store/ProjectStore";
+import { MLDialog } from "@/app/lib/monalee-ui/components/MLDialog/MLDialog";
 
 export { listColumns, listColumnLabels } from "./ListView";
 export type { ColumnDef } from "./ListView";
@@ -117,7 +118,7 @@ export function ProjectsView({
   const showViewsBar = activeTab === "list" && (savedViews.length > 0 || !!onReapplySharedView);
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
-  const { projects, setProjects, presaleStages, postSaleStages, allStages, moveProjectToStage, stageHistoryMap } = useProjectStore();
+  const { projects, setProjects, presaleStages, postSaleStages, allStages, moveProjectToStage, stageHistoryMap, getIncompleteChecklistItems } = useProjectStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeStageTab, setActiveStageTab] = useState("presale");
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
@@ -127,17 +128,30 @@ export function ProjectsView({
     useSensor(PointerSensor, { activationConstraint: { distance: isTimeTravel ? Infinity : 5 } })
   );
 
+  const [pendingMove, setPendingMove] = useState<{
+    moves: { projectId: string; fromStageId: string; fromStageName: string; toStageId: string; toStageName: string }[];
+    incompleteItems: string[];
+    fromStageName: string;
+  } | null>(null);
+  const dragOriginRef = useRef<{ projectId: string; stageId: string } | null>(null);
+
+  const confirmPendingMove = useCallback(() => {
+    if (!pendingMove) return;
+    for (const m of pendingMove.moves) {
+      moveProjectToStage(m.projectId, m.toStageId, m.toStageName);
+    }
+    setPendingMove(null);
+  }, [pendingMove, moveProjectToStage]);
+
+  const cancelPendingMove = useCallback(() => {
+    setPendingMove(null);
+  }, []);
+
   const toggleCardSelect = useCallback((id: string) => {
     setSelectedCards((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        setSidebarProjectId((cur) => (cur === id ? null : cur));
-      } else {
-        next.add(id);
-        setSidebarProjectId(id);
-        setSidebarTab("details");
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
@@ -167,6 +181,9 @@ export function ProjectsView({
 
   const handleMoveForward = useCallback(() => {
     if (!canMoveForward) return;
+    const movesToMake: { projectId: string; fromStageId: string; fromStageName: string; toStageId: string; toStageName: string }[] = [];
+    const allIncomplete: string[] = [];
+    let fromStageName = "";
     for (const id of selectedIds) {
       const p = projects.find((pr) => pr.id === id);
       if (!p) continue;
@@ -174,13 +191,27 @@ export function ProjectsView({
       if (idx < stageOrder.length - 1) {
         const newStageId = stageOrder[idx + 1];
         const stage = allStages.find((s) => s.id === newStageId);
-        moveProjectToStage(id, newStageId, stage?.title ?? p.status);
+        const currentStage = allStages.find((s) => s.id === p.stageId);
+        const incomplete = getIncompleteChecklistItems(id, p.stageId);
+        if (incomplete.length > 0) {
+          allIncomplete.push(...incomplete);
+          fromStageName = currentStage?.title ?? p.status;
+        }
+        movesToMake.push({ projectId: id, fromStageId: p.stageId, fromStageName: currentStage?.title ?? p.status, toStageId: newStageId, toStageName: stage?.title ?? p.status });
       }
     }
-  }, [selectedIds, canMoveForward, stageOrder, allStages, projects, moveProjectToStage]);
+    if (allIncomplete.length > 0) {
+      setPendingMove({ moves: movesToMake, incompleteItems: [...new Set(allIncomplete)], fromStageName });
+    } else {
+      for (const m of movesToMake) moveProjectToStage(m.projectId, m.toStageId, m.toStageName);
+    }
+  }, [selectedIds, canMoveForward, stageOrder, allStages, projects, moveProjectToStage, getIncompleteChecklistItems]);
 
   const handleMoveBack = useCallback(() => {
     if (!canMoveBack) return;
+    const movesToMake: { projectId: string; fromStageId: string; fromStageName: string; toStageId: string; toStageName: string }[] = [];
+    const allIncomplete: string[] = [];
+    let fromStageName = "";
     for (const id of selectedIds) {
       const p = projects.find((pr) => pr.id === id);
       if (!p) continue;
@@ -188,10 +219,21 @@ export function ProjectsView({
       if (idx > 0) {
         const newStageId = stageOrder[idx - 1];
         const stage = allStages.find((s) => s.id === newStageId);
-        moveProjectToStage(id, newStageId, stage?.title ?? p.status);
+        const currentStage = allStages.find((s) => s.id === p.stageId);
+        const incomplete = getIncompleteChecklistItems(id, p.stageId);
+        if (incomplete.length > 0) {
+          allIncomplete.push(...incomplete);
+          fromStageName = currentStage?.title ?? p.status;
+        }
+        movesToMake.push({ projectId: id, fromStageId: p.stageId, fromStageName: currentStage?.title ?? p.status, toStageId: newStageId, toStageName: stage?.title ?? p.status });
       }
     }
-  }, [selectedIds, canMoveBack, stageOrder, allStages, projects, moveProjectToStage]);
+    if (allIncomplete.length > 0) {
+      setPendingMove({ moves: movesToMake, incompleteItems: [...new Set(allIncomplete)], fromStageName });
+    } else {
+      for (const m of movesToMake) moveProjectToStage(m.projectId, m.toStageId, m.toStageName);
+    }
+  }, [selectedIds, canMoveBack, stageOrder, allStages, projects, moveProjectToStage, getIncompleteChecklistItems]);
 
   const handleReview = useCallback(() => {
     const firstId = [...selectedIds][0];
@@ -321,8 +363,11 @@ export function ProjectsView({
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  }, []);
+    const projectId = event.active.id as string;
+    const stageId = findStageForProject(projectId);
+    dragOriginRef.current = stageId ? { projectId, stageId } : null;
+    setActiveId(projectId);
+  }, [findStageForProject]);
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
@@ -354,8 +399,16 @@ export function ProjectsView({
     (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
+      const origin = dragOriginRef.current;
+      dragOriginRef.current = null;
 
-      if (!over) return;
+      if (!over) {
+        if (origin) {
+          const originStage = allStages.find((s) => s.id === origin.stageId);
+          moveProjectToStage(origin.projectId, origin.stageId, originStage?.title ?? "");
+        }
+        return;
+      }
 
       const activeProjectId = active.id as string;
       const overId = over.id as string;
@@ -364,6 +417,21 @@ export function ProjectsView({
 
       const activeStageId = findStageForProject(activeProjectId);
       if (!activeStageId) return;
+
+      if (origin && activeStageId !== origin.stageId) {
+        const incomplete = getIncompleteChecklistItems(origin.projectId, origin.stageId);
+        if (incomplete.length > 0) {
+          const originStage = allStages.find((s) => s.id === origin.stageId);
+          const targetStage = allStages.find((s) => s.id === activeStageId);
+          moveProjectToStage(origin.projectId, origin.stageId, originStage?.title ?? "");
+          setPendingMove({
+            moves: [{ projectId: origin.projectId, fromStageId: origin.stageId, fromStageName: originStage?.title ?? "", toStageId: activeStageId, toStageName: targetStage?.title ?? "" }],
+            incompleteItems: incomplete,
+            fromStageName: originStage?.title ?? "",
+          });
+          return;
+        }
+      }
 
       const overStageId = findStageForProject(overId);
       if (overStageId && activeStageId === overStageId) {
@@ -381,7 +449,7 @@ export function ProjectsView({
         }
       }
     },
-    [findStageForProject, projectsByStage]
+    [findStageForProject, projectsByStage, allStages, moveProjectToStage, getIncompleteChecklistItems]
   );
 
   const handleAddTag = useCallback(
@@ -437,21 +505,25 @@ export function ProjectsView({
   useEffect(() => {
     if (!sidebarProjectId) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedCards((prev) => {
-          const next = new Set(prev);
-          next.delete(sidebarProjectId);
-          return next;
-        });
+      if (e.key === "Escape") setSidebarProjectId(null);
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-sidebar-popover]") && !target.closest("[data-open-sidebar]")) {
         setSidebarProjectId(null);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [sidebarProjectId]);
 
   const handleOpenProject = (id: string) => {
-    router.push(`/project/${id}`);
+    setSidebarProjectId((prev) => (prev === id ? null : id));
+    setSidebarTab("details");
   };
 
   return (
@@ -671,16 +743,7 @@ export function ProjectsView({
                     onSidebarTabChange={setSidebarTab}
                     sidebarChecklist={sidebarChecklist}
                     onSidebarChecklistChange={setSidebarChecklist}
-                    onCloseSidebar={() => {
-                      if (sidebarProjectId) {
-                        setSelectedCards((prev) => {
-                          const next = new Set(prev);
-                          next.delete(sidebarProjectId);
-                          return next;
-                        });
-                      }
-                      setSidebarProjectId(null);
-                    }}
+                    onCloseSidebar={() => setSidebarProjectId(null)}
                   />
                   ) : null
                 ))}
@@ -780,6 +843,29 @@ export function ProjectsView({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <MLDialog
+        open={!!pendingMove}
+        onOpenChange={(open) => { if (!open) cancelPendingMove(); }}
+        title="Incomplete Checklist Items"
+        description={pendingMove ? `There ${pendingMove.incompleteItems.length === 1 ? "is" : "are"} ${pendingMove.incompleteItems.length} item${pendingMove.incompleteItems.length === 1 ? "" : "s"} remaining in the "${pendingMove.fromStageName}" stage. Are you sure you want to move ${pendingMove.moves.length === 1 ? "this project" : "these projects"}?` : ""}
+        confirmText="Move Anyway"
+        cancelText="Cancel"
+        onConfirm={confirmPendingMove}
+        onCancel={cancelPendingMove}
+        size="sm"
+      >
+        {pendingMove && (
+          <ul className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+            {pendingMove.incompleteItems.map((label) => (
+              <li key={label} className="flex items-start gap-2 text-sm text-[var(--color-text)]">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                {label}
+              </li>
+            ))}
+          </ul>
+        )}
+      </MLDialog>
 
     </div>
   );

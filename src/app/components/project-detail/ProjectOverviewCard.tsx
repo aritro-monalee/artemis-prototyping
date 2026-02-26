@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Plus,
@@ -20,6 +20,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { TAG_LAYOUT_TRANSITION } from "@/app/data/constants";
 import { useTagFlow, type TagType } from "@/app/hooks/useTagFlow";
 import { GanttChartContent } from "./GanttChartContent";
+import { MLDialog } from "@/app/lib/monalee-ui/components/MLDialog/MLDialog";
 
 type ProjectType = "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
 
@@ -42,7 +43,7 @@ function ProjectTypeTag({ type }: { type: ProjectType }) {
 }
 
 export function ProjectOverviewCard({ project }: { project: ProjectDetailData }) {
-  const { updateProject, getProjectType, setProjectType: storeSetProjectType, presaleStages, postSaleStages, getStageHistory, moveProjectToStage } = useProjectStore();
+  const { updateProject, getProjectType, setProjectType: storeSetProjectType, presaleStages, postSaleStages, moveProjectToStage, getIncompleteChecklistItems, allStages } = useProjectStore();
 
   const presaleIds = presaleStages.map((s) => s.id);
   const isPresale = presaleIds.includes(project.stageId);
@@ -63,6 +64,36 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
   const [ganttOpen, setGanttOpen] = useState(false);
   const pillsInnerRef = useRef<HTMLDivElement>(null);
   const [pillsShift, setPillsShift] = useState(0);
+  const [pendingStageMove, setPendingStageMove] = useState<{ stageId: string; title: string } | null>(null);
+  const [incompleteItems, setIncompleteItems] = useState<string[]>([]);
+
+  const currentStageName = allStages.find((s) => s.id === project.stageId)?.title ?? project.status;
+
+  const handleStageClick = useCallback(
+    (stageId: string, stageTitle: string) => {
+      const incomplete = getIncompleteChecklistItems(project.id, project.stageId);
+      if (incomplete.length > 0) {
+        setIncompleteItems(incomplete);
+        setPendingStageMove({ stageId, title: stageTitle });
+      } else {
+        moveProjectToStage(project.id, stageId, stageTitle);
+      }
+    },
+    [project.id, project.stageId, getIncompleteChecklistItems, moveProjectToStage]
+  );
+
+  const confirmStageMove = useCallback(() => {
+    if (pendingStageMove) {
+      moveProjectToStage(project.id, pendingStageMove.stageId, pendingStageMove.title);
+      setPendingStageMove(null);
+      setIncompleteItems([]);
+    }
+  }, [pendingStageMove, project.id, moveProjectToStage]);
+
+  const cancelStageMove = useCallback(() => {
+    setPendingStageMove(null);
+    setIncompleteItems([]);
+  }, []);
 
   const tagFlow = useTagFlow({
     projectId: project.id,
@@ -107,119 +138,163 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
   }, [project.stageId]);
 
   return (
-    <div className="relative bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] flex flex-col items-start w-full">
+    <div className="relative bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] flex flex-col w-full shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] group/card">
       {popoverOpen && (
         <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); dismissAll(); }} />
       )}
 
-      {/* Stage pills + Project type badge */}
-      <div className="relative w-full">
-        <div className="flex items-center justify-between w-full px-3 pt-3 pb-1.5" style={{ boxShadow: "0px 1px 0px 0px rgba(0,0,0,0.05)" }}>
-          <div className="min-w-0 flex-1 overflow-hidden -ml-3">
-            <motion.div
-              ref={pillsInnerRef}
-              className="flex items-center gap-1 w-max"
-              animate={{ x: pillsShift }}
-              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            >
-              {phaseStages.map((stage, idx) => {
-                const isCurrent = stage.id === project.stageId;
-                const dist = Math.abs(idx - currentIdx);
-                const visible = dist <= 1;
-                return (
-                  <motion.button
-                    key={stage.id}
-                    data-current={isCurrent}
-                    animate={{
-                      backgroundColor: isCurrent ? "#998d7d" : "rgba(153,141,125,0.2)",
-                      borderColor: isCurrent ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.04)",
-                      opacity: visible ? 1 : 0,
-                    }}
+      {/* Header — stage pills + days badge (mirrors ProjectCard header row) */}
+      <div className="shrink-0 flex items-center gap-[5px] px-[12px] py-[8px] bg-[rgba(0,0,0,0.01)] border-b-[0.5px] border-[rgba(0,0,0,0.08)] overflow-clip">
+        <div className="min-w-0 flex-1 overflow-hidden -ml-[12px]">
+          <motion.div
+            ref={pillsInnerRef}
+            className="flex items-center gap-1 w-max"
+            animate={{ x: pillsShift }}
+            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            {phaseStages.map((stage, idx) => {
+              const isCurrent = stage.id === project.stageId;
+              const dist = Math.abs(idx - currentIdx);
+              const visible = dist <= 1;
+              return (
+                <motion.button
+                  key={stage.id}
+                  data-current={isCurrent}
+                  animate={{
+                    backgroundColor: isCurrent ? "#998d7d" : "rgba(153,141,125,0.2)",
+                    borderColor: isCurrent ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.04)",
+                    opacity: visible ? 1 : 0,
+                  }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="shrink-0 flex items-center justify-center p-1 rounded-[4px] cursor-pointer hover:opacity-80 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
+                  style={{
+                    borderWidth: "0.6px",
+                    borderStyle: "solid",
+                    boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                    pointerEvents: visible ? "auto" : "none",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isCurrent) {
+                      handleStageClick(stage.id, stage.title);
+                    }
+                  }}
+                >
+                  <motion.span
+                    className="font-medium whitespace-nowrap"
+                    animate={{ color: isCurrent ? "#ffffff" : "rgba(0,0,0,0.2)" }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="shrink-0 flex items-center justify-center p-1 rounded-[4px] cursor-pointer hover:opacity-80 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
-                    style={{
-                      borderWidth: "0.6px",
-                      borderStyle: "solid",
-                      boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
-                      pointerEvents: visible ? "auto" : "none",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isCurrent) {
-                        moveProjectToStage(project.id, stage.id, stage.title);
-                      }
-                    }}
+                    style={{ fontSize: "10px", lineHeight: "normal" }}
                   >
-                    <motion.span
-                      className="font-medium whitespace-nowrap"
-                      animate={{ color: isCurrent ? "#ffffff" : "rgba(0,0,0,0.2)" }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
-                      style={{ fontSize: "10px", lineHeight: "normal" }}
-                    >
-                      {stage.title}
-                    </motion.span>
-                  </motion.button>
-                );
-              })}
-            </motion.div>
+                    {stage.title}
+                  </motion.span>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        </div>
+        <Popover.Root open={ganttOpen} onOpenChange={setGanttOpen}>
+          <Popover.Trigger asChild>
+            <button className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.04)] p-[4px] rounded-[6px] shrink-0 flex items-center justify-center overflow-clip cursor-pointer hover:bg-[rgba(0,0,0,0.08)] transition-colors">
+              <span className="font-normal text-[var(--color-text)] text-xs leading-none">{project.daysInStage} {project.daysInStage === 1 ? "Day" : "Days"}</span>
+            </button>
+          </Popover.Trigger>
+          <AnimatePresence>
+            {ganttOpen && (
+              <Popover.Portal forceMount>
+                <Popover.Content
+                  side="bottom"
+                  align="end"
+                  sideOffset={8}
+                  collisionPadding={16}
+                  asChild
+                  onPointerDownOutside={() => setGanttOpen(false)}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+                    className="z-50 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-xl overflow-hidden shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] origin-top-right"
+                  >
+                    <GanttChartContent
+                      projectId={project.id}
+                      isPresale={isPresale}
+                      phaseStages={phaseStages}
+                      currentStageId={project.stageId}
+                    />
+                  </motion.div>
+                </Popover.Content>
+              </Popover.Portal>
+            )}
+          </AnimatePresence>
+        </Popover.Root>
+      </div>
+
+      {/* Body — address/owner + meta */}
+      <div className="flex-1 flex items-start p-[12px] min-h-0">
+        <div className="flex-1 flex flex-col justify-between self-stretch min-w-0 leading-none">
+          <div className="flex flex-col gap-[6px]">
+            <p className="font-medium text-[var(--color-text)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
+              {project.address}
+            </p>
+            <p className="font-normal text-[var(--color-text-muted)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
+              {project.ownerName}
+            </p>
           </div>
-          <Popover.Root open={ganttOpen} onOpenChange={setGanttOpen}>
-            <Popover.Trigger asChild>
-              <button className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.04)] p-1 rounded-[4px] shrink-0 flex items-center justify-center overflow-clip ml-2 cursor-pointer hover:bg-[rgba(0,0,0,0.08)] transition-colors">
-                <span className="text-xs text-[var(--color-text)] leading-none">{project.daysInStage} {project.daysInStage === 1 ? "day" : "days"}</span>
-              </button>
-            </Popover.Trigger>
-            <AnimatePresence>
-              {ganttOpen && (
-                <Popover.Portal forceMount>
-                  <Popover.Content
-                    side="bottom"
-                    align="end"
-                    sideOffset={8}
-                    collisionPadding={16}
-                    asChild
-                    onPointerDownOutside={() => setGanttOpen(false)}
-                  >
-                    <motion.div
-                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                      transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="z-50 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-xl overflow-hidden shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] origin-top-right"
-                    >
-                      <GanttChartContent
-                        projectId={project.id}
-                        isPresale={isPresale}
-                        phaseStages={phaseStages}
-                        currentStageId={project.stageId}
-                      />
-                    </motion.div>
-                  </Popover.Content>
-                </Popover.Portal>
+          <div className="flex items-center gap-[8px] mt-[6px]">
+            {/* Sales rep picker */}
+            <div className="relative">
+              {!salesRepPicker ? (
+                <button
+                  className="cursor-pointer text-xs text-[rgba(85,78,70,0.7)] hover:text-[var(--color-text)] transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setSalesRepPicker(true); }}
+                >
+                  {salesRep}
+                </button>
+              ) : (
+                <span className="text-xs text-[rgba(85,78,70,0.7)] invisible">{salesRep}</span>
               )}
-            </AnimatePresence>
-          </Popover.Root>
+              <AnimatePresence>
+                {salesRepPicker && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute left-0 top-[calc(100%-16px)] z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip"
+                    style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)", minWidth: "160px" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="pl-2 pt-0.5">
+                      <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Sales Rep</span>
+                    </div>
+                    {["Aritro Paul", "Hudolf E.", "Nina Wong", "Marcus Chen"].map((name, i, arr) => (
+                      <button
+                        key={name}
+                        className={`flex items-center gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
+                          i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
+                        }`}
+                        onClick={() => { setSalesRep(name); setSalesRepPicker(false); }}
+                      >
+                        <span className={`text-xs leading-4 ${name === salesRep ? "font-medium text-[var(--color-text)]" : "text-[var(--color-text-muted)]"}`}>{name}</span>
+                        {name === salesRep && <Check className="w-3 h-3 text-[var(--color-brand)] ml-auto" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <span className="text-xs text-[rgba(85,78,70,0.7)] shrink-0">{project.date.replace(`, ${new Date().getFullYear()}`, "")}</span>
+          </div>
         </div>
-
       </div>
 
-      {/* Address + Owner */}
-      <div className="flex items-start w-full pt-3 pb-1.5 px-3">
-        <div className="flex-1 flex flex-col h-9 justify-between min-w-0">
-          <p className="text-sm font-medium text-[var(--color-text)] truncate w-full">
-            {project.address}
-          </p>
-          <p className="text-sm text-[var(--color-text-muted)] truncate w-full">
-            {project.ownerName}
-          </p>
-        </div>
-      </div>
-
-      {/* Tags */}
-      <div className="relative w-full">
+      {/* Footer — tags (mirrors ProjectCard footer) */}
+      <div className="relative">
         <div className={`transition-opacity duration-150 ${tagStep ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-          <div className="flex items-center justify-between px-3 py-1.5">
-            <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <div className="border-t-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(0,0,0,0.04)]">
+            <div className="flex items-center gap-[5px] px-[12px] py-[6px] flex-wrap min-h-[36px]">
               {tags.map((tag, index) => (
                 <div key={`${tag.type}-${index}`} className="relative">
                   {tagMenuIndex !== index ? (
@@ -236,80 +311,86 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
                       <Tag type={tag.type as TagType} reason={tag.reason} />
                     </div>
                   )}
-
-                  <AnimatePresence>
-                    {tagMenuIndex === index && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.12, ease: "easeOut" }}
-                        className="absolute left-0 top-0 z-30 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg whitespace-nowrap origin-top-left"
-                        style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          className="w-full p-2 border-b-[0.5px] border-[#d5c8b8] cursor-pointer flex items-start"
-                          onClick={() => setTagMenuIndex(null)}
-                        >
-                          <motion.div layoutId={`sidebar-tag-${index}`} transition={TAG_LAYOUT_TRANSITION}>
-                            <Tag type={tag.type as TagType} reason={tag.reason} />
-                          </motion.div>
-                        </button>
-                        <button
-                          className="flex items-center gap-[10px] px-2 py-1.5 w-full cursor-pointer hover:bg-black/[0.03] transition-colors border-b-[0.5px] border-[#d5c8b8]"
-                          onClick={() => handleEditTag(index)}
-                        >
-                          <SquarePen className="w-3.5 h-3.5 text-[var(--color-text-muted)] shrink-0" />
-                          <span className="text-xs text-[var(--color-text-muted)]">Edit Tag</span>
-                        </button>
-                        <button
-                          className="flex items-center gap-[10px] px-2 py-1.5 w-full cursor-pointer hover:bg-black/[0.03] transition-colors"
-                          onClick={() => handleDeleteTag(index)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-[var(--color-text-muted)] shrink-0" />
-                          <span className="text-xs text-[var(--color-text-muted)]">Delete Tag</span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               ))}
               <button
-                className="flex items-center gap-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-muted)] transition-colors cursor-pointer"
+                className="flex items-center gap-[2px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-muted)] transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   openTagPicker();
                 }}
               >
-                <Plus className="w-4 h-4" />
-                {tags.length === 0 && <span className="text-xs font-medium leading-none">Add a tag</span>}
+                <Plus className="w-[16px] h-[16px]" />
+                {tags.length === 0 && <span className="font-medium text-xs leading-none">Add a tag</span>}
               </button>
-            </div>
-            <div className="shrink-0 ml-2">
-              {!projectTypePicker ? (
-                <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
-                  <button className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setProjectTypePicker(true); }}>
+              <div className="relative ml-auto shrink-0">
+                {!projectTypePicker ? (
+                  <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
+                    <button className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setProjectTypePicker(true); }}>
+                      <ProjectTypeTag type={projectType} />
+                    </button>
+                  </motion.div>
+                ) : (
+                  <div style={{ visibility: "hidden" }}>
                     <ProjectTypeTag type={projectType} />
-                  </button>
-                </motion.div>
-              ) : (
-                <div style={{ visibility: "hidden" }}>
-                  <ProjectTypeTag type={projectType} />
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Tag menu — renders upward */}
+        <AnimatePresence>
+          {tagMenuIndex !== null && tags[tagMenuIndex] && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
+              className="absolute left-[12px] right-[12px] -top-[8px] z-30 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] whitespace-nowrap origin-bottom-left"
+              style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="w-full px-[12px] py-[6px] border-b-[0.5px] border-[#d5c8b8] cursor-pointer flex items-start"
+                onClick={() => setTagMenuIndex(null)}
+              >
+                <motion.div layoutId={`sidebar-tag-${tagMenuIndex}`} transition={TAG_LAYOUT_TRANSITION}>
+                  <Tag type={tags[tagMenuIndex].type as TagType} reason={tags[tagMenuIndex].reason} />
+                </motion.div>
+              </button>
+              <button
+                className="flex items-center gap-[10px] px-[8px] py-[6px] w-full cursor-pointer hover:bg-black/[0.03] transition-colors border-b-[0.5px] border-[#d5c8b8]"
+                onClick={() => handleEditTag(tagMenuIndex)}
+              >
+                <SquarePen className="w-[14px] h-[14px] text-[var(--color-text-muted)] shrink-0" />
+                <span className="font-normal text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: "12px", lineHeight: "16px" }}>
+                  Edit Tag
+                </span>
+              </button>
+              <button
+                className="flex items-center gap-[10px] px-[8px] py-[6px] w-full cursor-pointer hover:bg-black/[0.03] transition-colors"
+                onClick={() => handleDeleteTag(tagMenuIndex)}
+              >
+                <Trash2 className="w-[14px] h-[14px] text-[var(--color-text-muted)] shrink-0" />
+                <span className="font-normal text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: "12px", lineHeight: "16px" }}>
+                  Delete Tag
+                </span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tag picker — renders upward */}
         <AnimatePresence>
           {tagStep && (
             <motion.div
-              initial={{ opacity: 0, y: -4 }}
+              initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
+              exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="absolute top-0 left-3 right-3 z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip origin-top-left"
+              className="absolute -top-[8px] left-[12px] right-[12px] z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-[8px] overflow-clip"
               style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -325,7 +406,7 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
                     {(["On Hold", "Lost", "Change Order"] as const).map((type, i, arr) => (
                       <button
                         key={type}
-                        className={`flex items-center gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
+                        className={`flex items-center gap-[10px] p-[8px] w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
                           i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
                         }`}
                         onClick={() => handlePickTag(type)}
@@ -343,7 +424,7 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.1 }}
-                    className="flex items-center gap-[10px] p-2"
+                    className="flex items-center gap-[10px] p-[8px]"
                   >
                     <motion.div
                       className="shrink-0"
@@ -352,10 +433,11 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
                     >
                       <Tag type={pendingTagType!} />
                     </motion.div>
-                    <div className="flex-1 flex items-center gap-1 min-w-0 overflow-clip">
+                    <div className="flex-1 flex items-center gap-[4px] min-w-0 overflow-clip">
                       <input
                         ref={reasonInputRef}
-                        className="flex-1 min-w-0 bg-transparent outline-none text-xs text-[var(--color-text-muted)] placeholder:text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap"
+                        className="flex-1 min-w-0 bg-transparent outline-none font-normal text-[var(--color-text-muted)] placeholder:text-[var(--color-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap"
+                        style={{ fontSize: "12px", lineHeight: 1 }}
                         placeholder="Add a reason (optional)"
                         value={tagReason}
                         onChange={(e) => setTagReason(e.target.value)}
@@ -366,10 +448,11 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
                       />
                       <button
                         aria-label="Submit tag"
-                        className="shrink-0 bg-[var(--color-brand)] border-[0.417px] border-[rgba(255,255,255,0.2)] rounded-full flex items-center justify-center cursor-pointer hover:bg-[var(--color-brand-hover)] transition-colors p-[3.333px] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
+                        className="shrink-0 bg-[var(--color-brand)] border-[0.417px] border-[rgba(255,255,255,0.2)] rounded-[82.5px] flex items-center justify-center cursor-pointer hover:bg-[var(--color-brand-hover)] transition-colors"
+                        style={{ padding: "3.333px", boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)" }}
                         onClick={handleSubmitTag}
                       >
-                        <ArrowUp className="w-[13.333px] h-[13.333px] text-white" />
+                        <ArrowUp className="text-white" style={{ width: "13.333px", height: "13.333px" }} />
                       </button>
                     </div>
                   </motion.div>
@@ -378,97 +461,68 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
             </motion.div>
           )}
         </AnimatePresence>
-
-        <AnimatePresence>
-          {projectTypePicker && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="absolute top-0 left-3 right-3 z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip origin-top-left"
-              style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="pr-2 pt-0.5 text-right">
-                <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Project Type</span>
-              </div>
-              {(["Solar", "Battery", "Solar + Battery", "Home Improvement"] as const).map((type, i, arr) => (
-                <button
-                  key={type}
-                  className={`flex items-center justify-end gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
-                    i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
-                  }`}
-                  onClick={() => {
-                    setProjectType(type);
-                    setProjectTypePicker(false);
-                  }}
-                >
-                  {type === projectType ? (
-                    <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
-                      <ProjectTypeTag type={type} />
-                    </motion.div>
-                  ) : (
-                    <ProjectTypeTag type={type} />
-                  )}
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Footer: assignee (picker) + date */}
-      <div className="flex items-center gap-[5px] overflow-clip w-full px-3 py-2 bg-[rgba(0,0,0,0.04)] border-t-[0.5px] border-[rgba(0,0,0,0.08)] rounded-b-lg">
-        {!salesRepPicker ? (
-          <button
-            className="cursor-pointer bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.08)] flex items-center justify-center overflow-clip p-1 rounded-[4px] shrink-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30"
-            onClick={(e) => { e.stopPropagation(); setSalesRepPicker(true); }}
-          >
-            <span className="text-xs font-medium text-[var(--color-text)] leading-none">{salesRep}</span>
-          </button>
-        ) : (
-          <div className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.08)] flex items-center justify-center overflow-clip p-1 rounded-[4px] shrink-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] invisible">
-            <span className="text-xs font-medium text-[var(--color-text)] leading-none">{salesRep}</span>
-          </div>
-        )}
-        <div className="flex-1 flex items-center justify-end">
-          <div className="p-1 rounded-[4px] flex items-center justify-center overflow-clip">
-            <span className="text-xs text-[var(--color-text-muted)] leading-none">{project.date}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Sales rep popover */}
+      {/* Project type picker popover */}
       <AnimatePresence>
-        {salesRepPicker && (
+        {projectTypePicker && (
           <motion.div
-            initial={{ opacity: 0, y: 4 }}
+            initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute left-3 right-3 bottom-3 z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip"
+            className="absolute right-3 top-[50%] z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip origin-top-right"
             style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pl-2 pt-0.5">
-              <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Sales Rep</span>
+            <div className="pr-2 pt-0.5 text-right">
+              <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Project Type</span>
             </div>
-            {["Aritro Paul", "Hudolf E.", "Nina Wong", "Marcus Chen"].map((name, i, arr) => (
+            {(["Solar", "Battery", "Solar + Battery", "Home Improvement"] as const).map((type, i, arr) => (
               <button
-                key={name}
-                className={`flex items-center gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
+                key={type}
+                className={`flex items-center justify-end gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
                   i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
                 }`}
-                onClick={() => { setSalesRep(name); setSalesRepPicker(false); }}
+                onClick={() => {
+                  setProjectType(type);
+                  setProjectTypePicker(false);
+                }}
               >
-                <span className={`text-xs leading-4 ${name === salesRep ? "font-medium text-[var(--color-text)]" : "text-[var(--color-text-muted)]"}`}>{name}</span>
-                {name === salesRep && <Check className="w-3 h-3 text-[var(--color-brand)] ml-auto" />}
+                {type === projectType ? (
+                  <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
+                    <ProjectTypeTag type={type} />
+                  </motion.div>
+                ) : (
+                  <ProjectTypeTag type={type} />
+                )}
               </button>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
+
+      <MLDialog
+        open={!!pendingStageMove}
+        onOpenChange={(open) => { if (!open) cancelStageMove(); }}
+        title="Incomplete Checklist Items"
+        description={`There are ${incompleteItems.length} items remaining in the "${currentStageName}" stage. Are you sure you want to move this project?`}
+        confirmText="Move Anyway"
+        cancelText="Cancel"
+        onConfirm={confirmStageMove}
+        onCancel={cancelStageMove}
+        size="sm"
+      >
+        <ul className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+          {incompleteItems.map((label) => (
+            <li key={label} className="flex items-start gap-2 text-sm text-[var(--color-text)]">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+              {label}
+            </li>
+          ))}
+        </ul>
+      </MLDialog>
+
     </div>
   );
 }

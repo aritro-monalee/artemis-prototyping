@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { MoreVertical } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { MoreVertical, RefreshCw, Check } from "lucide-react";
 import { MLButton } from "@/app/lib/monalee-ui";
 import {
   MLDropdownMenu,
   MLDropdownMenuTrigger,
   MLDropdownMenuContent,
   MLDropdownMenuItem,
+  MLDropdownMenuSeparator,
 } from "@/app/lib/monalee-ui/components/MLDropdownMenu";
 import { AnimatePresence } from "framer-motion";
 import { ConnectCRMModal } from "./ConnectCRMModal";
@@ -21,12 +21,15 @@ import {
 } from "@/app/data/crm-integrations";
 import { CrmIllustration } from "./shared/CrmIllustration";
 import { PROVIDER_LOGOS } from "@/app/data/constants";
+import { MLToolTip } from "@/app/lib/monalee-ui";
+
+type SyncStatus = "idle" | "syncing" | "done";
 
 /* ─── Inline provider icons (small, for footer) ─── */
 
 function ProviderIcon({ provider }: { provider: CRMProvider }) {
   return (
-    <Image
+    <img
       src={PROVIDER_LOGOS[provider]}
       alt={CRM_PROVIDERS[provider].name}
       width={24}
@@ -40,10 +43,14 @@ function ProviderIcon({ provider }: { provider: CRMProvider }) {
 
 function CRMCard({
   connection,
+  syncStatus,
+  onSyncNow,
   onDelete,
   onEditMappings,
 }: {
   connection: CRMConnection;
+  syncStatus: SyncStatus;
+  onSyncNow: () => void;
   onDelete: () => void;
   onEditMappings: () => void;
 }) {
@@ -52,12 +59,33 @@ function CRMCard({
     ? provider.brandColor
     : "rgba(0,0,0,0.06)";
 
-  const statusLabel = connection.mode === "sync" ? "Synced" : "Imported";
-  const statusColor = connection.active
-    ? connection.mode === "sync"
-      ? "text-emerald-600"
-      : "text-blue-600"
-    : "text-base-muted-foreground";
+  const isSyncing = syncStatus === "syncing";
+  const isDone = syncStatus === "done";
+
+  let statusLabel: string;
+  let statusColor: string;
+  let StatusIcon: React.ReactNode = null;
+
+  if (isSyncing) {
+    statusLabel = "Syncing…";
+    statusColor = "text-amber-600";
+    StatusIcon = (
+      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+    );
+  } else if (isDone) {
+    statusLabel = "Synced";
+    statusColor = "text-emerald-600";
+    StatusIcon = (
+      <Check className="w-3.5 h-3.5" />
+    );
+  } else {
+    statusLabel = connection.mode === "sync" ? "Synced" : "Imported";
+    statusColor = connection.active
+      ? connection.mode === "sync"
+        ? "text-emerald-600"
+        : "text-blue-600"
+      : "text-base-muted-foreground";
+  }
 
   return (
     <div className="relative bg-cream-50 aspect-[3/2] overflow-hidden flex flex-col rounded-xl border border-base-border shadow-sm">
@@ -80,9 +108,19 @@ function CRMCard({
           </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <span className={`text-sm font-medium px-1.5 ${statusColor}`}>
-            {statusLabel}
-          </span>
+          <MLToolTip
+            tooltipContent={
+              isSyncing
+                ? "Sync in progress…"
+                : `Last synced ${connection.lastSynced}`
+            }
+            side="top"
+          >
+            <span className={`inline-flex items-center gap-1 text-sm font-medium px-1.5 cursor-default transition-colors duration-200 ${statusColor}`}>
+              {StatusIcon}
+              {statusLabel}
+            </span>
+          </MLToolTip>
           <MLDropdownMenu>
             <MLDropdownMenuTrigger asChild>
               <button className="p-1 rounded hover:bg-cream-200/50 transition-colors">
@@ -90,6 +128,14 @@ function CRMCard({
               </button>
             </MLDropdownMenuTrigger>
             <MLDropdownMenuContent align="end">
+              <MLDropdownMenuItem
+                disabled={isSyncing}
+                onClick={onSyncNow}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+                {isSyncing ? "Syncing…" : "Sync Now"}
+              </MLDropdownMenuItem>
+              <MLDropdownMenuSeparator />
               <MLDropdownMenuItem onClick={onEditMappings}>Edit Mappings</MLDropdownMenuItem>
               <MLDropdownMenuItem className="text-red-600" onClick={onDelete}>
                 Disconnect
@@ -110,6 +156,35 @@ export function IntegrationsSettings() {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<CRMConnection | null>(null);
+  const [syncStatuses, setSyncStatuses] = useState<Record<string, SyncStatus>>({});
+  const syncTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(syncTimers.current).forEach(clearTimeout);
+    };
+  }, []);
+
+  const handleSyncNow = useCallback((key: string) => {
+    if (syncStatuses[key] === "syncing") return;
+
+    setSyncStatuses((prev) => ({ ...prev, [key]: "syncing" }));
+
+    const syncDuration = 2000 + Math.random() * 1000;
+    syncTimers.current[key] = setTimeout(() => {
+      setConnections((prev) =>
+        prev.map((c) =>
+          c.key === key ? { ...c, lastSynced: "Just now" } : c
+        )
+      );
+      setSyncStatuses((prev) => ({ ...prev, [key]: "done" }));
+
+      syncTimers.current[key] = setTimeout(() => {
+        setSyncStatuses((prev) => ({ ...prev, [key]: "idle" }));
+        delete syncTimers.current[key];
+      }, 2000);
+    }, syncDuration);
+  }, [syncStatuses]);
 
   return (
     <>
@@ -139,6 +214,8 @@ export function IntegrationsSettings() {
             <CRMCard
               key={conn.key}
               connection={conn}
+              syncStatus={syncStatuses[conn.key] ?? "idle"}
+              onSyncNow={() => handleSyncNow(conn.key)}
               onDelete={() =>
                 setConnections((prev) =>
                   prev.filter((c) => c.key !== conn.key)

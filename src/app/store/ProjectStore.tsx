@@ -43,6 +43,8 @@ import { parseAddress } from "@/app/data/filters";
 
 // ── sessionStorage keys ──
 
+const SEED_VERSION = 2;
+const SEED_VERSION_KEY = "artemis-seed-version";
 const PROJECTS_KEY = "artemis-projects";
 const STAGES_KEY = "artemis-stages";
 const PIPELINE_EDGES_KEY = "artemis-pipeline-edges";
@@ -263,9 +265,22 @@ function saveToSession<T>(key: string, value: T) {
   }
 }
 
+function checkSeedVersion() {
+  if (typeof window === "undefined") return;
+  try {
+    const stored = sessionStorage.getItem(SEED_VERSION_KEY);
+    if (!stored || parseInt(stored, 10) < SEED_VERSION) {
+      [PROJECTS_KEY, STAGES_KEY, PIPELINE_EDGES_KEY, SETTINGS_KEY, PROJECT_DATA_KEY, CHECKLIST_TEMPLATE_KEY, CHECKLIST_ORDER_KEY].forEach((k) => sessionStorage.removeItem(k));
+      sessionStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
+    }
+  } catch { /* ignore */ }
+}
+
 // ── Provider ──
 
 export function ProjectStoreProvider({ children }: { children: ReactNode }) {
+  checkSeedVersion();
+
   // ── Projects ──
   const [projects, setProjectsRaw] = useState<ProjectCardData[]>(() =>
     loadFromSession(PROJECTS_KEY, initialProjects)
@@ -369,9 +384,13 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
       const seedHistory = generateInitialStageHistory(initialProjects);
       const seeded: Record<string, ProjectExtraData> = {};
       for (const p of initialProjects) {
+        const extraType = projectDetailExtras[p.id]?.projectType;
+        const derivedType = extraType
+          ?? (p.panels > 0 && p.batteries > 0 ? "Solar + Battery" : p.batteries > 0 ? "Battery" : "Solar");
         seeded[p.id] = {
           ...(saved[p.id] ? { ...defaultProjectExtra(), ...saved[p.id] } : defaultProjectExtra()),
           stageHistory: seedHistory[p.id] ?? [],
+          projectType: saved[p.id]?.projectType ?? derivedType,
         };
       }
       return seeded;
@@ -736,11 +755,31 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
 
   // ── Per-project data helpers ──
 
+  const deriveProjectType = useCallback(
+    (projectId: string): "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" => {
+      const extraType = projectDetailExtras[projectId]?.projectType;
+      if (extraType) return extraType;
+      const proj = projects.find((p) => p.id === projectId);
+      if (!proj) return "Solar";
+      if (proj.panels > 0 && proj.batteries > 0) return "Solar + Battery";
+      if (proj.batteries > 0) return "Battery";
+      return "Solar";
+    },
+    [projects]
+  );
+
   const getExtra = useCallback(
     (projectId: string): ProjectExtraData => {
       const stored = projectData[projectId];
-      if (!stored) return defaultProjectExtra();
+      if (!stored) {
+        const defaults = defaultProjectExtra();
+        defaults.projectType = deriveProjectType(projectId);
+        return defaults;
+      }
       const merged = { ...defaultProjectExtra(), ...stored };
+      if (!stored.projectType) {
+        merged.projectType = deriveProjectType(projectId);
+      }
       // Migrate old checklist array format → checklistDone record
       if (!merged.checklistDone || (Array.isArray((stored as unknown as Record<string, unknown>).checklist))) {
         const oldChecklist = (stored as unknown as Record<string, unknown>).checklist;
@@ -755,7 +794,7 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
       }
       return merged;
     },
-    [projectData]
+    [projectData, deriveProjectType]
   );
 
   const setExtra = useCallback(

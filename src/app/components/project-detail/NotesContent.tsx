@@ -21,13 +21,13 @@ export function ComposeBar({ projectId, newComment, setNewComment }: { projectId
     const now = new Date();
     const time = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).replace(" ", "");
     updateProjectNotes(projectId, (prev) => [
-      ...prev,
       { id: Date.now(), name: "You", time, textParts: [{ text }], thread: [] },
+      ...prev,
     ]);
     setNewComment("");
   };
   return (
-    <div className="shrink-0 px-3 pb-3 pt-9 relative" style={{ background: "linear-gradient(to bottom, rgba(254,251,247,0) 0%, #fefbf7 64%)" }}>
+    <div className="shrink-0 px-3 pb-3 pt-9 relative -mt-9 z-10" style={{ background: "linear-gradient(to bottom, rgba(244,241,237,0) 0%, rgba(244,241,237,1) 64%, rgba(244,241,237,1) 100%)" }}>
       <div className="bg-white border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-md p-2 min-h-[60px] flex items-end gap-2.5 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] transition-colors focus-within:border-[var(--color-brand)] focus-within:shadow-[0_0_0_1px_rgba(110,4,189,0.2),0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)]">
         <textarea
           className="flex-1 text-xs text-[var(--color-text)] leading-4 bg-transparent outline-none resize-none placeholder:text-[var(--color-text-muted)] min-h-[40px]"
@@ -133,7 +133,7 @@ export function NotesContent({ projectId }: { projectId: string }) {
                   )
                 )}
               </p>
-              <div className="absolute right-[16px] top-[10px] flex items-center gap-2">
+              <div className="absolute right-0 top-[10px] flex items-center gap-2">
                 <span className="text-[10px] text-[var(--color-text-secondary)] leading-none">{note.time}</span>
                 <button aria-label="More options" className="block cursor-pointer w-[13px] h-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30">
                   <Ellipsis className="w-[13px] h-[13px] text-[var(--color-text-secondary)]" />

@@ -42,7 +42,7 @@ function ProjectTypeTag({ type }: { type: ProjectType }) {
   );
 }
 
-export function ProjectOverviewCard({ project }: { project: ProjectDetailData }) {
+export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectDetailData; hideFooter?: boolean }) {
   const { updateProject, getProjectType, setProjectType: storeSetProjectType, presaleStages, postSaleStages, moveProjectToStage, getIncompleteChecklistItems, allStages } = useProjectStore();
 
   const presaleIds = presaleStages.map((s) => s.id);
@@ -232,7 +232,7 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
       </div>
 
       {/* Body — address/owner + meta */}
-      <div className="flex-1 flex items-start p-[12px] min-h-0">
+      {!hideFooter && <div className="flex-1 flex items-start p-[12px] min-h-0">
         <div className="flex-1 flex flex-col justify-between self-stretch min-w-0 leading-none">
           <div className="flex flex-col gap-[6px]">
             <p className="font-medium text-[var(--color-text)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
@@ -288,10 +288,10 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
             <span className="text-xs text-[rgba(85,78,70,0.7)] shrink-0">{project.date.replace(`, ${new Date().getFullYear()}`, "")}</span>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Footer — tags (mirrors ProjectCard footer) */}
-      <div className="relative">
+      {!hideFooter && <><div className="relative">
         <div className={`transition-opacity duration-150 ${tagStep ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <div className="border-t-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(0,0,0,0.04)]">
             <div className="flex items-center gap-[5px] px-[12px] py-[6px] flex-wrap min-h-[36px]">
@@ -500,7 +500,7 @@ export function ProjectOverviewCard({ project }: { project: ProjectDetailData })
             ))}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence></>}
 
       <MLDialog
         open={!!pendingStageMove}

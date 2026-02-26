@@ -65,7 +65,7 @@ export interface ProjectDetailData extends ProjectCardData {
   financePayment: string;
   systemSizeKw: string;
   estOffset: string;
-  projectType: "Solar" | "Battery" | "Solar + Battery";
+  projectType: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
   panelModel: string;
   panelCount: number;
   inverterModel: string;

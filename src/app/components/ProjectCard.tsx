@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Plus, Check, ArrowUp, SquarePen, Trash2 } from "lucide-react";
+import { Plus, Check, ArrowUp, SquarePen, Trash2, Expand } from "lucide-react";
 import type { ProjectCardData, ProjectDetailData } from "@/app/data/projects";
 import { getProjectDetail } from "@/app/data/projects";
 import { useSortable } from "@dnd-kit/sortable";
@@ -120,6 +120,7 @@ export function ProjectCard({
           currentStageName={currentStageName}
           currentStageColor={currentStageColor}
           disableDrag={disableDrag}
+          sidebarOpen={sidebarOpen}
         />
         {typeof document !== "undefined" &&
           createPortal(
@@ -193,6 +194,7 @@ function CardContent({
   currentStageName,
   currentStageColor,
   disableDrag,
+  sidebarOpen: isSidebarOpen,
 }: {
   project: ProjectCardData;
   onOpen: (id: string) => void;
@@ -212,6 +214,7 @@ function CardContent({
   currentStageName?: string;
   currentStageColor?: string;
   disableDrag?: boolean;
+  sidebarOpen?: boolean;
 }) {
   const router = useRouter();
   const [localSelected, setLocalSelected] = useState(false);
@@ -252,7 +255,9 @@ function CardContent({
         style={{
           boxShadow: selected
             ? "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0 0 0 1px white, 0 0 0 2px #6e04bd, 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)"
-            : "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)",
+            : isSidebarOpen
+              ? "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0 0 0 1px white, 0 0 0 2px #6e04bd, 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)"
+              : "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)",
         }}
       >
         {popoverOpen && (
@@ -399,6 +404,16 @@ function CardContent({
                   {project.tags.length === 0 && (
                     <span className="font-medium text-xs leading-none">Add a tag</span>
                   )}
+                </div>
+                <div
+                  data-open-sidebar
+                  className={`ml-auto shrink-0 transition-colors cursor-pointer ${isSidebarOpen ? "text-[var(--color-text)]" : "text-[#ac9b85] hover:text-[var(--color-text)]"}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpen(project.id);
+                  }}
+                >
+                  <Expand className="w-[16px] h-[16px]" />
                 </div>
               </div>
             </div>

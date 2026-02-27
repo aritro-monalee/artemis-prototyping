@@ -53,6 +53,8 @@ const SETTINGS_KEY = "artemis-settings";
 const PROJECT_DATA_KEY = "artemis-project-data";
 const CHECKLIST_TEMPLATE_KEY = "artemis-checklist-template";
 const CHECKLIST_ORDER_KEY = "artemis-checklist-order";
+const TAG_DEFS_KEY = "artemis-tag-defs";
+const LABEL_DEFS_KEY = "artemis-label-defs";
 
 // ── Per-project extra data ──
 
@@ -94,6 +96,27 @@ function defaultProjectExtra(): ProjectExtraData {
     uploadedDocuments: [],
   };
 }
+
+// ── Tag & label definitions ──
+
+export interface TagDef {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface LabelSettingsDef {
+  id: string;
+  name: string;
+  color: string;
+  visibility: "public" | "private";
+}
+
+const defaultTagDefs: TagDef[] = [
+  { id: "on-hold", name: "On Hold", color: "#ea580c" },
+  { id: "lost", name: "Lost", color: "#c43750" },
+  { id: "change-order", name: "Change Order", color: "#059669" },
+];
 
 // ── Saved views ──
 
@@ -217,6 +240,12 @@ interface ProjectStoreValue {
   applyViewConfig: (config: Omit<SavedView, "id" | "name" | "createdAt">) => void;
   resetToDefaultView: () => void;
 
+  // Tag & label definitions (settings)
+  tagDefs: TagDef[];
+  setTagDefs: Dispatch<SetStateAction<TagDef[]>>;
+  labelDefs: LabelSettingsDef[];
+  setLabelDefs: Dispatch<SetStateAction<LabelSettingsDef[]>>;
+
   // Per-project data accessors
   getProjectNotes: (projectId: string) => Note[];
   setProjectNotes: (projectId: string, notes: Note[]) => void;
@@ -280,7 +309,7 @@ function checkSeedVersion() {
   try {
     const stored = sessionStorage.getItem(SEED_VERSION_KEY);
     if (!stored || parseInt(stored, 10) < SEED_VERSION) {
-      [PROJECTS_KEY, STAGES_KEY, PIPELINE_EDGES_KEY, SETTINGS_KEY, PROJECT_DATA_KEY, CHECKLIST_TEMPLATE_KEY, CHECKLIST_ORDER_KEY].forEach((k) => sessionStorage.removeItem(k));
+      [PROJECTS_KEY, STAGES_KEY, PIPELINE_EDGES_KEY, SETTINGS_KEY, PROJECT_DATA_KEY, CHECKLIST_TEMPLATE_KEY, CHECKLIST_ORDER_KEY, TAG_DEFS_KEY, LABEL_DEFS_KEY].forEach((k) => sessionStorage.removeItem(k));
       sessionStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
     }
   } catch { /* ignore */ }
@@ -384,6 +413,17 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  // ── Tag & label definitions ──
+  const [tagDefs, setTagDefs] = useState<TagDef[]>(() =>
+    loadFromSession(TAG_DEFS_KEY, defaultTagDefs)
+  );
+  const [labelDefs, setLabelDefs] = useState<LabelSettingsDef[]>(() =>
+    loadFromSession(
+      LABEL_DEFS_KEY,
+      predefinedLabels.map((l) => ({ ...l, visibility: "public" as const }))
+    )
+  );
+
   // ── Per-project data ──
   const [projectData, setProjectData] = useState<Record<string, ProjectExtraData>>(() => {
     const saved = loadFromSession<Record<string, ProjectExtraData>>(PROJECT_DATA_KEY, {});
@@ -420,6 +460,8 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => { saveToSession(CHECKLIST_TEMPLATE_KEY, checklistTemplate); }, [checklistTemplate]);
   useEffect(() => { saveToSession(CHECKLIST_ORDER_KEY, checklistOrderState); }, [checklistOrderState]);
   useEffect(() => { saveToSession(PROJECT_DATA_KEY, projectData); }, [projectData]);
+  useEffect(() => { saveToSession(TAG_DEFS_KEY, tagDefs); }, [tagDefs]);
+  useEffect(() => { saveToSession(LABEL_DEFS_KEY, labelDefs); }, [labelDefs]);
 
   // ── Projects CRUD ──
 
@@ -997,6 +1039,7 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
       customFieldValues, setCustomFieldValues,
       filters, setFilters,
       savedViews, activeViewId, saveCurrentView, applyView, deleteView, applyViewConfig, resetToDefaultView,
+      tagDefs, setTagDefs, labelDefs, setLabelDefs,
       getProjectNotes, setProjectNotes, updateProjectNotes,
       getDesignComments, setDesignComments, updateDesignComments,
       checklistTemplate, setChecklistTemplate,
@@ -1013,7 +1056,7 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
       getUploadedDocuments, addUploadedDocuments,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [projects, stages, allStages, filterOptions, recentProjects, settings, projectData, pipelineEdges, checklistTemplate, checklistOrderState]
+    [projects, stages, allStages, filterOptions, recentProjects, settings, projectData, pipelineEdges, checklistTemplate, checklistOrderState, tagDefs, labelDefs]
   );
 
   return (

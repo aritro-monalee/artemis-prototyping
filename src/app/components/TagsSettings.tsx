@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TAG_LAYOUT_TRANSITION_SETTINGS } from "@/app/data/constants";
+import { useProjectStore, type TagDef } from "@/app/store/ProjectStore";
 
 /* ── Tag color helpers ── */
 
@@ -24,18 +25,6 @@ function getTagStyles(hex: string) {
 }
 
 /* ── Tag data ── */
-
-interface TagDef {
-  id: string;
-  name: string;
-  color: string;
-}
-
-const predefinedTags: TagDef[] = [
-  { id: "on-hold", name: "On Hold", color: "#ea580c" },
-  { id: "lost", name: "Lost", color: "#c43750" },
-  { id: "change-order", name: "Change Order", color: "#059669" },
-];
 
 const TAG_COLORS_ROW1 = [
   "#000000",
@@ -457,7 +446,7 @@ function NewTagPopover({
 }
 
 export function TagsSettings() {
-  const [tags, setTags] = useState<TagDef[]>([...predefinedTags]);
+  const { tagDefs: tags, setTagDefs: setTags } = useProjectStore();
   const [openTagId, setOpenTagId] = useState<string | null>(null);
   const [addingTag, setAddingTag] = useState(false);
   const tagPopoverOpen = openTagId !== null || addingTag;

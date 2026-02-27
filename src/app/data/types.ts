@@ -9,7 +9,7 @@ export interface ProjectCardData {
   assignee: string;
   date: string;
   department: string;
-  tags: { type: "On Hold" | "Lost" | "Change Order"; reason?: string }[];
+  tags: { type: string; reason?: string }[];
   stageId: string;
   fullName: string;
   email: string;

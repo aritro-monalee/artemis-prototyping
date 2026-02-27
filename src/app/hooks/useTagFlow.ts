@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-export type TagType = "On Hold" | "Lost" | "Change Order";
+export type TagType = string;
 
 export type TagData = { type: TagType; reason?: string };
 

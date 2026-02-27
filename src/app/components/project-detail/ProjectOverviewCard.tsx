@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Plus,
@@ -55,8 +56,93 @@ function ProjectTypeTag({ type }: { type: ProjectType }) {
   );
 }
 
+const PROJECT_TYPES = ["Solar", "Battery", "Solar + Battery", "Home Improvement", "Roofing"] as const;
+
+function ProjectTypePickerPopover({
+  projectType,
+  hiSubtype,
+  triggerRect,
+  onSelectType,
+  onSelectSubtype,
+}: {
+  projectType: ProjectType;
+  hiSubtype: HomeImprovementSubtype | undefined;
+  triggerRect: DOMRect;
+  onSelectType: (type: ProjectType) => void;
+  onSelectSubtype: (sub: HomeImprovementSubtype) => void;
+}) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: triggerRect.left, top: triggerRect.top });
+
+  useEffect(() => {
+    const el = popoverRef.current;
+    if (!el) return;
+    const activeBtn = el.querySelector("[data-active='true']") as HTMLElement;
+    if (activeBtn) {
+      setPos({ left: triggerRect.left, top: triggerRect.top - activeBtn.offsetTop });
+    }
+  }, [triggerRect]);
+
+  return createPortal(
+    <motion.div
+      ref={popoverRef}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
+      className="fixed z-[9999] bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip"
+      style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)", minWidth: "180px", left: pos.left, top: pos.top }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="pl-2 pt-0.5">
+        <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Project Type</span>
+      </div>
+      {PROJECT_TYPES.map((type, i, arr) => (
+        <div key={type}>
+          <button
+            data-active={type === projectType}
+            className={`flex items-center gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
+              i < arr.length - 1 && !(type === "Home Improvement" && projectType === "Home Improvement") ? "border-b-[0.5px] border-[#d5c8b8]" : ""
+            }`}
+            onClick={() => onSelectType(type)}
+          >
+            {type === projectType ? (
+              <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
+                <ProjectTypeTag type={type} />
+              </motion.div>
+            ) : (
+              <ProjectTypeTag type={type} />
+            )}
+          </button>
+          {type === "Home Improvement" && projectType === "Home Improvement" && (
+            <div className={`pl-4 pb-1 ${i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""}`}>
+              {HI_SUBTYPES.map((sub) => {
+                const SubIcon = sub.icon;
+                const isActive = hiSubtype === sub.type;
+                return (
+                  <button
+                    key={sub.type}
+                    className={`flex items-center gap-2 px-2 py-1.5 w-full rounded-md text-xs cursor-pointer transition-colors ${
+                      isActive ? "bg-black/[0.05] font-semibold text-[var(--color-text)]" : "text-[#998d7d] hover:bg-black/[0.03]"
+                    }`}
+                    onClick={() => onSelectSubtype(sub.type)}
+                  >
+                    <SubIcon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
+                    <span>{sub.type}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ))}
+    </motion.div>,
+    document.body
+  );
+}
+
 export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectDetailData; hideFooter?: boolean }) {
-  const { updateProject, getProjectType, setProjectType: storeSetProjectType, getHomeImprovementType, setHomeImprovementType, presaleStages, postSaleStages, moveProjectToStage, getIncompleteChecklistItems, allStages } = useProjectStore();
+  const { updateProject, getProjectType, setProjectType: storeSetProjectType, getHomeImprovementType, setHomeImprovementType, getHomeImprovementQty, getRoofingShingleType, getRoofingSquares, presaleStages, postSaleStages, moveProjectToStage, getIncompleteChecklistItems, allStages, tagDefs } = useProjectStore();
 
   const presaleIds = presaleStages.map((s) => s.id);
   const isPresale = presaleIds.includes(project.stageId);
@@ -72,6 +158,7 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
   const hiSubtype = getHomeImprovementType(project.id);
   const setProjectType = (type: ProjectType) => storeSetProjectType(project.id, type);
   const [projectTypePicker, setProjectTypePicker] = useState(false);
+  const projectTypeTagRef = useRef<HTMLDivElement>(null);
   const salesRep = project.assignee;
   const setSalesRep = (name: string) => { updateProject(project.id, { assignee: name }); };
   const [salesRepPicker, setSalesRepPicker] = useState(false);
@@ -246,8 +333,8 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
       </div>
 
       {/* Body — address/owner + meta */}
-      {!hideFooter && <div className="flex-1 flex items-start p-[12px] min-h-0">
-        <div className="flex-1 flex flex-col justify-between self-stretch min-w-0 leading-none">
+      {!hideFooter && <div className="flex-1 flex items-start px-[12px] py-[6px] min-h-0">
+        <div className="flex-1 flex flex-col justify-between self-stretch min-w-0 leading-none gap-[6px]">
           <div className="flex flex-col gap-[6px]">
             <p className="font-medium text-[var(--color-text)] text-sm w-full overflow-hidden whitespace-nowrap text-ellipsis">
               {project.address}
@@ -257,17 +344,79 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
             </p>
           </div>
           <div className="flex items-center gap-[8px] mt-[6px]">
-            {/* Sales rep picker */}
-            <div className="relative">
+            <div className="relative shrink-0" ref={projectTypeTagRef}>
+              {!projectTypePicker ? (
+                <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
+                  <button className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setProjectTypePicker(true); }}>
+                    <ProjectTypeTag type={projectType} />
+                  </button>
+                </motion.div>
+              ) : (
+                <div style={{ visibility: "hidden" }}>
+                  <ProjectTypeTag type={projectType} />
+                </div>
+              )}
+              <AnimatePresence>
+                {projectTypePicker && projectTypeTagRef.current && (
+                  <ProjectTypePickerPopover
+                    projectType={projectType}
+                    hiSubtype={hiSubtype}
+                    triggerRect={projectTypeTagRef.current.getBoundingClientRect()}
+                    onSelectType={(type) => {
+                      setProjectType(type);
+                      if (type !== "Home Improvement") {
+                        setHomeImprovementType(project.id, undefined);
+                        setProjectTypePicker(false);
+                      }
+                    }}
+                    onSelectSubtype={(sub) => {
+                      setHomeImprovementType(project.id, sub);
+                      setProjectTypePicker(false);
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+            <div className="flex items-center gap-[4px] text-xs leading-none whitespace-nowrap overflow-hidden min-w-0">
+              {projectType === "Home Improvement" ? (
+                <>
+                  <span className="font-medium text-[var(--color-text)] truncate">{hiSubtype ?? "Home Improvement"}</span>
+                  {(() => { const hiQty = getHomeImprovementQty(project.id); return hiQty != null ? (
+                    <span className="font-normal text-[#998d7d] shrink-0">{hiQty} {hiQty === 1 ? "Unit" : "Units"}</span>
+                  ) : null; })()}
+                </>
+              ) : projectType === "Roofing" ? (
+                <>
+                  <span className="font-medium text-[var(--color-text)] truncate">{getRoofingShingleType(project.id) ?? "Roofing"}</span>
+                  {(() => { const roofSq = getRoofingSquares(project.id); return roofSq != null ? (
+                    <span className="font-normal text-[#998d7d] shrink-0">{roofSq} Sq</span>
+                  ) : null; })()}
+                </>
+              ) : (
+                <>
+                  <span className="font-medium text-[var(--color-text)] shrink-0">{project.systemSize}</span>
+                  <span className="font-normal text-[#998d7d] truncate">
+                    {project.panels > 0 && `${project.panels} Panels`}
+                    {project.panels > 0 && project.batteries > 0 && ", "}
+                    {project.batteries > 0 && `${project.batteries} Battery`}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-[8px] mt-[6px]">
+            <div className="relative shrink-0">
               {!salesRepPicker ? (
                 <button
-                  className="cursor-pointer text-xs text-[rgba(85,78,70,0.7)] hover:text-[var(--color-text)] transition-colors"
+                  className="cursor-pointer bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.08)] rounded-[4px] p-[4px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center overflow-clip hover:bg-[rgba(0,0,0,0.06)] transition-colors"
                   onClick={(e) => { e.stopPropagation(); setSalesRepPicker(true); }}
                 >
-                  {salesRep}
+                  <span className="font-medium text-xs leading-none text-[var(--color-text)] whitespace-nowrap">{salesRep}</span>
                 </button>
               ) : (
-                <span className="text-xs text-[rgba(85,78,70,0.7)] invisible">{salesRep}</span>
+                <div className="bg-[rgba(0,0,0,0.04)] border-[0.5px] border-[rgba(0,0,0,0.08)] rounded-[4px] p-[4px] invisible">
+                  <span className="font-medium text-xs leading-none whitespace-nowrap">{salesRep}</span>
+                </div>
               )}
               <AnimatePresence>
                 {salesRepPicker && (
@@ -276,7 +425,7 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="absolute left-0 top-[calc(100%-16px)] z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip"
+                    className="absolute left-0 top-0 z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip"
                     style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)", minWidth: "160px" }}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -299,7 +448,11 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
                 )}
               </AnimatePresence>
             </div>
-            <span className="text-xs text-[rgba(85,78,70,0.7)] shrink-0">{project.date.replace(`, ${new Date().getFullYear()}`, "")}</span>
+            <div className="flex flex-1 items-center justify-end min-w-0">
+              <div className="rounded-[4px] p-[4px] flex items-center justify-center overflow-clip">
+                <span className="font-normal text-xs leading-none text-[var(--color-text-muted)] whitespace-nowrap">{project.date.replace(`, ${new Date().getFullYear()}`, "")}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>}
@@ -337,19 +490,6 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
                 <Plus className="w-[16px] h-[16px]" />
                 {tags.length === 0 && <span className="font-medium text-xs leading-none">Add a tag</span>}
               </button>
-              <div className="relative ml-auto shrink-0">
-                {!projectTypePicker ? (
-                  <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
-                    <button className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setProjectTypePicker(true); }}>
-                      <ProjectTypeTag type={projectType} />
-                    </button>
-                  </motion.div>
-                ) : (
-                  <div style={{ visibility: "hidden" }}>
-                    <ProjectTypeTag type={projectType} />
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -417,16 +557,16 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.1 }}
                   >
-                    {(["On Hold", "Lost", "Change Order"] as const).map((type, i, arr) => (
+                    {tagDefs.map((def, i) => (
                       <button
-                        key={type}
+                        key={def.id}
                         className={`flex items-center gap-[10px] p-[8px] w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
-                          i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
+                          i < tagDefs.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
                         }`}
-                        onClick={() => handlePickTag(type)}
+                        onClick={() => handlePickTag(def.name)}
                       >
-                        <motion.div layoutId={`sidebar-picker-${type}`} transition={TAG_LAYOUT_TRANSITION}>
-                          <Tag type={type} />
+                        <motion.div layoutId={`sidebar-picker-${def.name}`} transition={TAG_LAYOUT_TRANSITION}>
+                          <Tag type={def.name} />
                         </motion.div>
                       </button>
                     ))}
@@ -477,71 +617,7 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
         </AnimatePresence>
       </div>
 
-      {/* Project type picker popover */}
-      <AnimatePresence>
-        {projectTypePicker && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute right-3 top-[50%] z-20 bg-[var(--color-bg)] border-[0.5px] border-[rgba(0,0,0,0.16)] rounded-lg overflow-clip origin-top-right"
-            style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="pr-2 pt-0.5 text-right">
-              <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Project Type</span>
-            </div>
-            {(["Solar", "Battery", "Solar + Battery", "Home Improvement", "Roofing"] as const).map((type, i, arr) => (
-              <div key={type}>
-                <button
-                  className={`flex items-center justify-end gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
-                    i < arr.length - 1 && !(type === "Home Improvement" && projectType === "Home Improvement") ? "border-b-[0.5px] border-[#d5c8b8]" : ""
-                  }`}
-                  onClick={() => {
-                    setProjectType(type);
-                    if (type !== "Home Improvement") {
-                      setHomeImprovementType(project.id, undefined);
-                      setProjectTypePicker(false);
-                    }
-                  }}
-                >
-                  {type === projectType ? (
-                    <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
-                      <ProjectTypeTag type={type} />
-                    </motion.div>
-                  ) : (
-                    <ProjectTypeTag type={type} />
-                  )}
-                </button>
-                {type === "Home Improvement" && projectType === "Home Improvement" && (
-                  <div className={`pl-4 pb-1 ${i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""}`}>
-                    {HI_SUBTYPES.map((sub) => {
-                      const SubIcon = sub.icon;
-                      const isActive = hiSubtype === sub.type;
-                      return (
-                        <button
-                          key={sub.type}
-                          className={`flex items-center gap-2 px-2 py-1.5 w-full rounded-md text-xs cursor-pointer transition-colors ${
-                            isActive ? "bg-black/[0.05] font-semibold text-[var(--color-text)]" : "text-[#998d7d] hover:bg-black/[0.03]"
-                          }`}
-                          onClick={() => {
-                            setHomeImprovementType(project.id, sub.type);
-                            setProjectTypePicker(false);
-                          }}
-                        >
-                          <SubIcon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
-                          <span>{sub.type}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence></>}
+      </>}
 
       <MLDialog
         open={!!pendingStageMove}

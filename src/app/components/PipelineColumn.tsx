@@ -10,8 +10,8 @@ interface PipelineColumnProps {
   stage: PipelineStage;
   projects: ProjectCardData[];
   onOpenProject: (id: string) => void;
-  onAddTag?: (projectId: string, tag: { type: "On Hold" | "Lost" | "Change Order"; reason?: string }) => void;
-  onEditTag?: (projectId: string, tagIndex: number, tag: { type: "On Hold" | "Lost" | "Change Order"; reason?: string }) => void;
+  onAddTag?: (projectId: string, tag: { type: string; reason?: string }) => void;
+  onEditTag?: (projectId: string, tagIndex: number, tag: { type: string; reason?: string }) => void;
   onDeleteTag?: (projectId: string, tagIndex: number) => void;
   onEditStage?: (stageId: string) => void;
   selectedCards?: Set<string>;

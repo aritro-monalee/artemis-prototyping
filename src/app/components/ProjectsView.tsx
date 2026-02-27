@@ -456,7 +456,7 @@ export function ProjectsView({
   const handleAddTag = useCallback(
     (
       projectId: string,
-      tag: { type: "On Hold" | "Lost" | "Change Order"; reason?: string }
+      tag: { type: string; reason?: string }
     ) => {
       setProjects((prev) =>
         prev.map((p) =>
@@ -473,7 +473,7 @@ export function ProjectsView({
     (
       projectId: string,
       tagIndex: number,
-      tag: { type: "On Hold" | "Lost" | "Change Order"; reason?: string }
+      tag: { type: string; reason?: string }
     ) => {
       setProjects((prev) =>
         prev.map((p) =>

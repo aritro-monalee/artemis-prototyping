@@ -381,7 +381,7 @@ function CardContent({
   sidebarOpen?: boolean;
 }) {
   const router = useRouter();
-  const { getProjectType, getHomeImprovementType, getHomeImprovementQty, getRoofingShingleType, getRoofingSquares } = useProjectStore();
+  const { getProjectType, getHomeImprovementType, getHomeImprovementQty, getRoofingShingleType, getRoofingSquares, tagDefs } = useProjectStore();
   const [localSelected, setLocalSelected] = useState(false);
   const selected = externalSelected ?? localSelected;
   const projectType = getProjectType(project.id) as ProjectType;
@@ -697,22 +697,22 @@ function CardContent({
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1 }}
                     >
-                      {(["On Hold", "Lost", "Change Order"] as const).map(
-                        (type, i, arr) => (
+                      {tagDefs.map(
+                        (def, i) => (
                           <button
-                            key={type}
+                            key={def.id}
                             className={`flex items-center gap-[10px] p-[8px] w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
-                              i < arr.length - 1
+                              i < tagDefs.length - 1
                                 ? "border-b-[0.5px] border-[#d5c8b8]"
                                 : ""
                             }`}
-                            onClick={() => handlePickTag(type)}
+                            onClick={() => handlePickTag(def.name)}
                           >
                             <motion.div
-                              layoutId={isDragOverlay ? undefined : `${project.id}-picker-${type}`}
+                              layoutId={isDragOverlay ? undefined : `${project.id}-picker-${def.name}`}
                               transition={TAG_LAYOUT_TRANSITION}
                             >
-                              <Tag type={type} />
+                              <Tag type={def.name} />
                             </motion.div>
                           </button>
                         )

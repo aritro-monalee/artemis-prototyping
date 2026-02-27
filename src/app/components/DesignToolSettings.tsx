@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronRight, Plus, Eye, EyeOff, Trash2 } from "lucide-react";
-import { predefinedLabels, type LabelDef } from "@/app/data/projects";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProjectStore, type LabelSettingsDef } from "@/app/store/ProjectStore";
 
 function Toggle({
   checked,
@@ -65,9 +65,7 @@ const RAINBOW_GRADIENT = "conic-gradient(#ff0000, #ff8800, #ffff00, #00ff00, #00
 
 const LAYOUT_TRANSITION = { layout: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] as const } };
 
-interface LabelState extends LabelDef {
-  visibility: "public" | "private";
-}
+type LabelState = LabelSettingsDef;
 
 /* ── Existing label cell (simple popover: badge + colors, immediate update) ── */
 
@@ -425,9 +423,7 @@ function NewLabelPopover({
 
 export function DesignToolSettings() {
   const [fireSetbacks, setFireSetbacks] = useState(false);
-  const [labels, setLabels] = useState<LabelState[]>(
-    predefinedLabels.map((l) => ({ ...l, visibility: "public" as const }))
-  );
+  const { labelDefs: labels, setLabelDefs: setLabels } = useProjectStore();
   const [openLabelId, setOpenLabelId] = useState<string | null>(null);
   const [addingLabel, setAddingLabel] = useState(false);
 

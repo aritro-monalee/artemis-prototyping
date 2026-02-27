@@ -61,11 +61,17 @@ export interface ProjectFilters {
   maxDaysInStage: string;
 }
 
+export type HomeImprovementSubtype = "Window" | "HVAC" | "Insulation" | "Water Heater";
+
 export interface ProjectDetailData extends ProjectCardData {
   financePayment: string;
   systemSizeKw: string;
   estOffset: string;
-  projectType: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
+  projectType: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing";
+  homeImprovementType?: HomeImprovementSubtype;
+  homeImprovementQty?: number;
+  roofingShingleType?: string;
+  roofingSquares?: number;
   panelModel: string;
   panelCount: number;
   inverterModel: string;

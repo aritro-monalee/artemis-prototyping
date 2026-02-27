@@ -38,12 +38,13 @@ import {
   type ActivityItem,
   type StageHistoryEntry,
 } from "@/app/data/projects";
+import type { HomeImprovementSubtype } from "@/app/data/types";
 import { projectDetailExtras, defaultDetailExtras } from "@/app/data/seed/extras";
 import { parseAddress } from "@/app/data/filters";
 
 // ── sessionStorage keys ──
 
-const SEED_VERSION = 2;
+const SEED_VERSION = 5;
 const SEED_VERSION_KEY = "artemis-seed-version";
 const PROJECTS_KEY = "artemis-projects";
 const STAGES_KEY = "artemis-stages";
@@ -70,7 +71,11 @@ interface ProjectExtraData {
   labelVisibility: Record<string, "public" | "private">;
   panelCount: number;
   activities: ActivityItem[];
-  projectType: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
+  projectType: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing";
+  homeImprovementType?: HomeImprovementSubtype;
+  homeImprovementQty?: number;
+  roofingShingleType?: string;
+  roofingSquares?: number;
   stageHistory: StageHistoryEntry[];
   uploadedDocuments: UploadedDocument[];
 }
@@ -236,8 +241,13 @@ interface ProjectStoreValue {
   getPanelCount: (projectId: string) => number;
   setPanelCount: (projectId: string, count: number) => void;
   getActivities: (projectId: string) => ActivityItem[];
-  getProjectType: (projectId: string) => "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
-  setProjectType: (projectId: string, type: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement") => void;
+  getProjectType: (projectId: string) => "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing";
+  setProjectType: (projectId: string, type: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing") => void;
+  getHomeImprovementType: (projectId: string) => HomeImprovementSubtype | undefined;
+  setHomeImprovementType: (projectId: string, type: HomeImprovementSubtype | undefined) => void;
+  getHomeImprovementQty: (projectId: string) => number | undefined;
+  getRoofingShingleType: (projectId: string) => string | undefined;
+  getRoofingSquares: (projectId: string) => number | undefined;
   getUploadedDocuments: (projectId: string) => UploadedDocument[];
   addUploadedDocuments: (projectId: string, docs: UploadedDocument[]) => void;
 }
@@ -391,6 +401,10 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
           ...(saved[p.id] ? { ...defaultProjectExtra(), ...saved[p.id] } : defaultProjectExtra()),
           stageHistory: seedHistory[p.id] ?? [],
           projectType: saved[p.id]?.projectType ?? derivedType,
+          homeImprovementType: saved[p.id]?.homeImprovementType ?? projectDetailExtras[p.id]?.homeImprovementType,
+          homeImprovementQty: saved[p.id]?.homeImprovementQty ?? projectDetailExtras[p.id]?.homeImprovementQty,
+          roofingShingleType: saved[p.id]?.roofingShingleType ?? projectDetailExtras[p.id]?.roofingShingleType,
+          roofingSquares: saved[p.id]?.roofingSquares ?? projectDetailExtras[p.id]?.roofingSquares,
         };
       }
       return seeded;
@@ -756,7 +770,7 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
   // ── Per-project data helpers ──
 
   const deriveProjectType = useCallback(
-    (projectId: string): "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" => {
+    (projectId: string): "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing" => {
       const extraType = projectDetailExtras[projectId]?.projectType;
       if (extraType) return extraType;
       const proj = projects.find((p) => p.id === projectId);
@@ -926,9 +940,33 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
     [getExtra]
   );
   const setProjectType = useCallback(
-    (pid: string, type: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement") =>
+    (pid: string, type: "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing") =>
       setExtra(pid, (e) => ({ ...e, projectType: type })),
     [setExtra]
+  );
+
+  const getHomeImprovementType = useCallback(
+    (pid: string) => getExtra(pid).homeImprovementType,
+    [getExtra]
+  );
+  const setHomeImprovementType = useCallback(
+    (pid: string, type: HomeImprovementSubtype | undefined) =>
+      setExtra(pid, (e) => ({ ...e, homeImprovementType: type })),
+    [setExtra]
+  );
+
+  const getHomeImprovementQty = useCallback(
+    (pid: string) => getExtra(pid).homeImprovementQty,
+    [getExtra]
+  );
+
+  const getRoofingShingleType = useCallback(
+    (pid: string) => getExtra(pid).roofingShingleType,
+    [getExtra]
+  );
+  const getRoofingSquares = useCallback(
+    (pid: string) => getExtra(pid).roofingSquares,
+    [getExtra]
   );
 
   const getUploadedDocuments = useCallback(
@@ -970,6 +1008,8 @@ export function ProjectStoreProvider({ children }: { children: ReactNode }) {
       getPanelCount, setPanelCount,
       getActivities,
       getProjectType, setProjectType,
+      getHomeImprovementType, setHomeImprovementType, getHomeImprovementQty,
+      getRoofingShingleType, getRoofingSquares,
       getUploadedDocuments, addUploadedDocuments,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

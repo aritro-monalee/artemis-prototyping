@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus, Check, ArrowUp, SquarePen, Trash2, Sun, SmartphoneCharging, Sunrise, Home, ChevronsLeftRight, PanelRightClose, LayoutList } from "lucide-react";
+import { Plus, Check, ArrowUp, SquarePen, Trash2, Sun, SmartphoneCharging, Home, ChevronsLeftRight, PanelRightClose, LayoutList } from "lucide-react";
+import { SolarBatteryIcon } from "./icons/SolarBatteryIcon";
+import { RoofingIcon } from "./icons/RoofingIcon";
 import type { ProjectCardData, ProjectDetailData } from "@/app/data/projects";
 import { getProjectDetail } from "@/app/data/projects";
 import { useSortable } from "@dnd-kit/sortable";
@@ -18,13 +20,14 @@ import { useProjectStore } from "@/app/store/ProjectStore";
 import { TAG_LAYOUT_TRANSITION } from "@/app/data/constants";
 import { useTagFlow, type TagType } from "@/app/hooks/useTagFlow";
 
-type ProjectType = "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
+type ProjectType = "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing";
 
-const PROJECT_TYPE_ICON: Record<ProjectType, typeof Sun> = {
+const PROJECT_TYPE_ICON: Record<ProjectType, typeof Sun | typeof SolarBatteryIcon | typeof RoofingIcon> = {
   Solar: Sun,
   Battery: SmartphoneCharging,
-  "Solar + Battery": Sunrise,
+  "Solar + Battery": SolarBatteryIcon,
   "Home Improvement": Home,
+  Roofing: RoofingIcon,
 };
 
 interface ProjectCardProps {
@@ -139,15 +142,36 @@ export function ProjectCard({
           createPortal(
             <AnimatePresence>
               {sidebarOpen && sidebarDetail && (
-                <SidebarPopoverContent
-                  key={project.id}
-                  project={sidebarDetail}
-                  activeTab={sidebarTab ?? "details"}
-                  onTabChange={onSidebarTabChange}
-                  showChecklist={sidebarChecklist ?? false}
-                  onShowChecklist={onSidebarChecklistChange}
-                  onClose={onCloseSidebar}
-                />
+                <>
+                  <motion.div
+                    key="sidebar-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+                    className="fixed z-40 pointer-events-none"
+                    style={{
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      width: 540,
+                      background: "linear-gradient(to right, rgba(244,241,237,0) 0%, #f4f1ed 30%)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
+                      maskImage: "linear-gradient(to right, transparent 0%, black 30%)",
+                      WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 30%)",
+                    }}
+                  />
+                  <SidebarPopoverContent
+                    key={project.id}
+                    project={sidebarDetail}
+                    activeTab={sidebarTab ?? "details"}
+                    onTabChange={onSidebarTabChange}
+                    showChecklist={sidebarChecklist ?? false}
+                    onShowChecklist={onSidebarChecklistChange}
+                    onClose={onCloseSidebar}
+                  />
+                </>
               )}
             </AnimatePresence>,
             document.body
@@ -189,41 +213,19 @@ function SidebarPopoverContent({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8, scale: 0.98 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -8, scale: 0.98 }}
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 40 }}
       transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
       data-sidebar-popover
-      className="fixed z-50 top-[80px] right-[16px] w-[370px] flex flex-col gap-[8px]"
-      style={{ bottom: 16 }}
+      className="fixed z-50 top-[80px] right-[16px] w-[370px] rounded-[12px] overflow-hidden border-[0.5px] border-[rgba(0,0,0,0.16)] flex flex-col"
+      style={{
+        bottom: 16,
+        boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)",
+        backgroundImage: "linear-gradient(180deg, #fefbf7 7%, rgba(254,251,247,0) 14%), linear-gradient(90deg, #f4f1ed 0%, #f4f1ed 100%)",
+      }}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Floating design preview */}
-      <div
-        className="shrink-0 w-full rounded-[12px] overflow-hidden border-[0.5px] border-[rgba(0,0,0,0.16)]"
-        style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)" }}
-      >
-        <div className="w-full aspect-[16/10] relative bg-[rgba(0,0,0,0.88)]">
-          <Image
-            src="/home image.png"
-            alt="Project aerial view"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-x-0 top-0 p-3 z-10 bg-gradient-to-b from-black/50 to-transparent">
-            <p className="text-white text-sm font-medium drop-shadow-sm">{project.address}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Popover panel */}
-      <div
-        className="flex-1 min-h-0 rounded-[12px] overflow-hidden border-[0.5px] border-[rgba(0,0,0,0.16)] flex flex-col"
-        style={{
-          boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)",
-          backgroundImage: "linear-gradient(180deg, #fefbf7 7%, rgba(254,251,247,0) 14%), linear-gradient(90deg, #f4f1ed 0%, #f4f1ed 100%)",
-        }}
-      >
       {/* Header bar */}
       <div
         className="flex items-center gap-4 h-14 px-4 shrink-0 border-b border-[#d5c8b8] sticky top-0 z-10"
@@ -272,6 +274,21 @@ function SidebarPopoverContent({
         >
           <LayoutList className="w-4 h-4 text-[var(--color-text)]" />
         </button>
+      </div>
+
+      {/* Design preview — persistent across all tabs */}
+      <div className="shrink-0 w-full px-3 pt-3">
+        <div className="w-full aspect-[16/10] relative bg-[rgba(0,0,0,0.88)] rounded-lg overflow-hidden shadow-sm border border-black/[0.08]">
+          <Image
+            src="/home image.png"
+            alt="Project aerial view"
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-x-0 top-0 p-3 z-10 bg-gradient-to-b from-black/50 to-transparent">
+            <p className="text-white text-sm font-medium drop-shadow-sm">{project.address}</p>
+          </div>
+        </div>
       </div>
 
       {/* Scrollable content */}
@@ -325,7 +342,6 @@ function SidebarPopoverContent({
       {activeView === "notes" && (
         <ComposeBar projectId={project.id} newComment={newComment} setNewComment={setNewComment} />
       )}
-      </div>
     </motion.div>
   );
 }
@@ -365,10 +381,14 @@ function CardContent({
   sidebarOpen?: boolean;
 }) {
   const router = useRouter();
-  const { getProjectType } = useProjectStore();
+  const { getProjectType, getHomeImprovementType, getHomeImprovementQty, getRoofingShingleType, getRoofingSquares } = useProjectStore();
   const [localSelected, setLocalSelected] = useState(false);
   const selected = externalSelected ?? localSelected;
   const projectType = getProjectType(project.id) as ProjectType;
+  const hiSubtype = getHomeImprovementType(project.id);
+  const hiQty = getHomeImprovementQty(project.id);
+  const shingleType = getRoofingShingleType(project.id);
+  const roofSq = getRoofingSquares(project.id);
   const TypeIcon = PROJECT_TYPE_ICON[projectType];
 
   const tagFlow = useTagFlow({
@@ -402,7 +422,7 @@ function CardContent({
 
   return (
       <div
-        className={`relative h-[184px] flex flex-col bg-[var(--color-bg)] rounded-[8px] ${popoverOpen ? "" : "overflow-clip"} group/card ${disableDrag ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+        className={`relative ${currentStageName ? "h-[210px]" : "h-[184px]"} flex flex-col bg-[var(--color-bg)] rounded-[8px] ${popoverOpen ? "" : "overflow-clip"} group/card ${disableDrag ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
         style={{
           boxShadow: selected
             ? "inset 0 0 0 0.5px rgba(0,0,0,0.16), 0 0 0 1px white, 0 0 0 2px #6e04bd, 0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)"
@@ -465,8 +485,9 @@ function CardContent({
           className={`flex-1 flex flex-col min-h-0 ${
             popoverOpen
               ? "cursor-default"
-              : "cursor-pointer hover:bg-black/[0.02]"
+              : "cursor-pointer hover:bg-[rgba(120,100,70,0.02)]"
           }`}
+          style={{ boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.06), 0px 1px 2px -1px rgba(0,0,0,0.04)" }}
           onClick={(e) => {
             e.stopPropagation();
             if (!popoverOpen) router.push(`/project/${project.id}`);
@@ -488,14 +509,32 @@ function CardContent({
             </div>
           </div>
           <div className="shrink-0 flex items-center gap-[10px] px-[12px] py-[8px]">
-            <TypeIcon className="w-[16px] h-[16px] shrink-0 text-[#998d7d]" strokeWidth={1.5} />
+            <TypeIcon className="w-[16px] h-[16px] shrink-0 text-[#998d7d]" strokeWidth={2} />
             <div className="flex items-center gap-[4px] text-sm leading-none">
-              <span className="font-medium text-[var(--color-text)]">{project.systemSize}</span>
-              <span className="font-normal text-[#998d7d]">
-                {project.panels > 0 && `${project.panels} Panels`}
-                {project.panels > 0 && project.batteries > 0 && ", "}
-                {project.batteries > 0 && `${project.batteries} Battery`}
-              </span>
+              {projectType === "Home Improvement" ? (
+                <>
+                  <span className="font-medium text-[var(--color-text)]">{hiSubtype ?? "Home Improvement"}</span>
+                  {hiQty != null && (
+                    <span className="font-normal text-[#998d7d]">{hiQty} {hiQty === 1 ? "Unit" : "Units"}</span>
+                  )}
+                </>
+              ) : projectType === "Roofing" ? (
+                <>
+                  <span className="font-medium text-[var(--color-text)]">{shingleType ?? "Roofing"}</span>
+                  {roofSq != null && (
+                    <span className="font-normal text-[#998d7d]">{roofSq} Sq</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="font-medium text-[var(--color-text)]">{project.systemSize}</span>
+                  <span className="font-normal text-[#998d7d]">
+                    {project.panels > 0 && `${project.panels} Panels`}
+                    {project.panels > 0 && project.batteries > 0 && ", "}
+                    {project.batteries > 0 && `${project.batteries} Battery`}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <div className="shrink-0 flex items-center gap-[12px] px-[12px] py-[8px] text-xs leading-none text-[rgba(85,78,70,0.7)] group-hover/card:text-[rgba(85,78,70,0.5)] transition-colors duration-200">

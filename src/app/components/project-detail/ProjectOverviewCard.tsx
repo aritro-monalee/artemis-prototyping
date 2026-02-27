@@ -10,10 +10,15 @@ import {
   Trash2,
   Sun,
   SmartphoneCharging,
-  Sunrise,
   Home,
+  AppWindow,
+  Snowflake,
+  Droplets,
 } from "lucide-react";
+import { SolarBatteryIcon } from "../icons/SolarBatteryIcon";
+import { RoofingIcon } from "../icons/RoofingIcon";
 import type { ProjectDetailData } from "@/app/data/projects";
+import type { HomeImprovementSubtype } from "@/app/data/types";
 import { useProjectStore } from "@/app/store/ProjectStore";
 import { Tag } from "../Tag";
 import * as Popover from "@radix-ui/react-popover";
@@ -22,14 +27,22 @@ import { useTagFlow, type TagType } from "@/app/hooks/useTagFlow";
 import { GanttChartContent } from "./GanttChartContent";
 import { MLDialog } from "@/app/lib/monalee-ui/components/MLDialog/MLDialog";
 
-type ProjectType = "Solar" | "Battery" | "Solar + Battery" | "Home Improvement";
+type ProjectType = "Solar" | "Battery" | "Solar + Battery" | "Home Improvement" | "Roofing";
 
-const PROJECT_TYPE_STYLES: Record<ProjectType, { bg: string; border: string; text: string; icon: typeof Sun }> = {
+const PROJECT_TYPE_STYLES: Record<ProjectType, { bg: string; border: string; text: string; icon: typeof Sun | typeof SolarBatteryIcon | typeof RoofingIcon }> = {
   Solar:              { bg: "bg-yellow-100",    border: "border-yellow-600",  text: "text-yellow-800",  icon: Sun },
   Battery:            { bg: "bg-emerald-100",   border: "border-emerald-600", text: "text-emerald-800", icon: SmartphoneCharging },
-  "Solar + Battery":  { bg: "bg-sky-100",       border: "border-sky-600",     text: "text-sky-800",     icon: Sunrise },
+  "Solar + Battery":  { bg: "bg-sky-100",       border: "border-sky-600",     text: "text-sky-800",     icon: SolarBatteryIcon },
   "Home Improvement": { bg: "bg-[var(--color-surface)]",     border: "border-[var(--color-text-secondary)]",   text: "text-[var(--color-text-muted)]",  icon: Home },
+  Roofing:            { bg: "bg-orange-100",    border: "border-orange-600",  text: "text-orange-800",  icon: RoofingIcon },
 };
+
+const HI_SUBTYPES: { type: HomeImprovementSubtype; icon: typeof Home }[] = [
+  { type: "Window", icon: AppWindow },
+  { type: "HVAC", icon: Snowflake },
+  { type: "Insulation", icon: Home },
+  { type: "Water Heater", icon: Droplets },
+];
 
 function ProjectTypeTag({ type }: { type: ProjectType }) {
   const style = PROJECT_TYPE_STYLES[type];
@@ -43,7 +56,7 @@ function ProjectTypeTag({ type }: { type: ProjectType }) {
 }
 
 export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectDetailData; hideFooter?: boolean }) {
-  const { updateProject, getProjectType, setProjectType: storeSetProjectType, presaleStages, postSaleStages, moveProjectToStage, getIncompleteChecklistItems, allStages } = useProjectStore();
+  const { updateProject, getProjectType, setProjectType: storeSetProjectType, getHomeImprovementType, setHomeImprovementType, presaleStages, postSaleStages, moveProjectToStage, getIncompleteChecklistItems, allStages } = useProjectStore();
 
   const presaleIds = presaleStages.map((s) => s.id);
   const isPresale = presaleIds.includes(project.stageId);
@@ -56,6 +69,7 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
     updateProject(project.id, { tags: next });
   };
   const projectType = getProjectType(project.id) as ProjectType;
+  const hiSubtype = getHomeImprovementType(project.id);
   const setProjectType = (type: ProjectType) => storeSetProjectType(project.id, type);
   const [projectTypePicker, setProjectTypePicker] = useState(false);
   const salesRep = project.assignee;
@@ -478,25 +492,52 @@ export function ProjectOverviewCard({ project, hideFooter }: { project: ProjectD
             <div className="pr-2 pt-0.5 text-right">
               <span className="text-[10px] font-medium text-[#998d7d] uppercase" style={{ letterSpacing: "0.1em" }}>Project Type</span>
             </div>
-            {(["Solar", "Battery", "Solar + Battery", "Home Improvement"] as const).map((type, i, arr) => (
-              <button
-                key={type}
-                className={`flex items-center justify-end gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
-                  i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""
-                }`}
-                onClick={() => {
-                  setProjectType(type);
-                  setProjectTypePicker(false);
-                }}
-              >
-                {type === projectType ? (
-                  <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
+            {(["Solar", "Battery", "Solar + Battery", "Home Improvement", "Roofing"] as const).map((type, i, arr) => (
+              <div key={type}>
+                <button
+                  className={`flex items-center justify-end gap-[10px] p-2 w-full overflow-clip cursor-pointer hover:bg-black/[0.03] transition-colors ${
+                    i < arr.length - 1 && !(type === "Home Improvement" && projectType === "Home Improvement") ? "border-b-[0.5px] border-[#d5c8b8]" : ""
+                  }`}
+                  onClick={() => {
+                    setProjectType(type);
+                    if (type !== "Home Improvement") {
+                      setHomeImprovementType(project.id, undefined);
+                      setProjectTypePicker(false);
+                    }
+                  }}
+                >
+                  {type === projectType ? (
+                    <motion.div layoutId="sidebar-project-type" transition={TAG_LAYOUT_TRANSITION}>
+                      <ProjectTypeTag type={type} />
+                    </motion.div>
+                  ) : (
                     <ProjectTypeTag type={type} />
-                  </motion.div>
-                ) : (
-                  <ProjectTypeTag type={type} />
+                  )}
+                </button>
+                {type === "Home Improvement" && projectType === "Home Improvement" && (
+                  <div className={`pl-4 pb-1 ${i < arr.length - 1 ? "border-b-[0.5px] border-[#d5c8b8]" : ""}`}>
+                    {HI_SUBTYPES.map((sub) => {
+                      const SubIcon = sub.icon;
+                      const isActive = hiSubtype === sub.type;
+                      return (
+                        <button
+                          key={sub.type}
+                          className={`flex items-center gap-2 px-2 py-1.5 w-full rounded-md text-xs cursor-pointer transition-colors ${
+                            isActive ? "bg-black/[0.05] font-semibold text-[var(--color-text)]" : "text-[#998d7d] hover:bg-black/[0.03]"
+                          }`}
+                          onClick={() => {
+                            setHomeImprovementType(project.id, sub.type);
+                            setProjectTypePicker(false);
+                          }}
+                        >
+                          <SubIcon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
+                          <span>{sub.type}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </button>
+              </div>
             ))}
           </motion.div>
         )}

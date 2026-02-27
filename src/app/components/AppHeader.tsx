@@ -8,7 +8,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   return (
-    <header className="h-16 min-h-[64px] border-b border-[var(--color-border)] bg-white flex items-center justify-between px-4 shrink-0">
+    <header className="h-16 min-h-[64px] border-b border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-between px-4 shrink-0">
       {/* Left: PanelLeft toggle + separator + breadcrumb */}
       <div className="flex items-center gap-2">
         <button

@@ -26,6 +26,7 @@ import {
   X,
   Link2,
   Check,
+  Plus,
 } from "lucide-react";
 import { PipelineColumn } from "./PipelineColumn";
 import { ProjectCard } from "./ProjectCard";
@@ -573,7 +574,8 @@ export function ProjectsView({
           <button
             className="flex items-center gap-2 bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] border-[0.5px] border-[rgba(0,0,0,0.16)] text-white text-xs font-medium h-8 pl-2 pr-1.5 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors cursor-pointer"
           >
-            <span className="leading-4">Create Project</span>
+            <Plus className="w-4 h-4" strokeWidth={2} />
+            <span className="leading-4">New Project</span>
             <div className="bg-[rgba(255,255,255,0.24)] border-[0.5px] border-[rgba(255,255,255,0.16)] rounded-[6px] px-1.5 py-1 shadow-sm flex items-center justify-center">
               <span className="text-xs font-semibold text-white leading-none">
                 P
